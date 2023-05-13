@@ -1,0 +1,20 @@
+object Aria2ControlForm: TAria2ControlForm
+  Left = 0
+  Top = 0
+  Caption = 'AriaNg'
+  ClientHeight = 770
+  ClientWidth = 990
+  Color = clWhite
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  OldCreateOrder = True
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+end
