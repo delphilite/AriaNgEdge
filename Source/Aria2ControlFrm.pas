@@ -286,7 +286,6 @@ begin
   OutputDebugString(('WebBrowserAfterCreated');
 {$ENDIF}
   FWebWindow.UpdateSize;
-  FWebBrowser.ZoomFactor := Screen.PixelsPerInch / 96;
 end;
 
 procedure TAria2ControlForm.WebBrowserDocumentTitleChanged(Sender: TObject);
