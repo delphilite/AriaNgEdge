@@ -31,17 +31,20 @@ type
   private
     function  CompareVersion(const AVer1, AVer2: string): Integer;
     function  CheckAriaNgFileBuild(const AFile: string): Boolean;
+    function  DarkModeIsEnabled: Boolean;
     function  GetShellFolderPath(nFolder: Integer): string;
     function  LoadDataFromFile(const AFileName: string; AEncoding: TEncoding;
       ABufferSize: Integer): string;
     procedure ExtractAriaNgFile(const AFile: string);
     procedure ParseOptionEvent(const AEvent: string);
+    procedure SetTitleThemeMode(const ATheme: string);
   private
     procedure WebBrowserAfterCreated(Sender: TObject);
     procedure WebBrowserDocumentTitleChanged(Sender: TObject);
     procedure WebBrowserExecuteScriptCompleted(Sender: TObject; aErrorCode: HRESULT;
       const aResultObjectAsJson: wvstring; aExecutionID: integer);
-    procedure WebBrowserInitializationError(Sender: TObject; aErrorCode: HRESULT; const aErrorMessage: wvstring);
+    procedure WebBrowserInitializationError(Sender: TObject; aErrorCode: HRESULT;
+      const aErrorMessage: wvstring);
     procedure WebBrowserInitTimer(Sender: TObject);
     procedure WebBrowserNavigationCompleted(Sender: TObject; const aWebView: ICoreWebView2;
       const aArgs: ICoreWebView2NavigationCompletedEventArgs);
@@ -50,6 +53,7 @@ type
   protected
     procedure WMMove(var aMessage : TWMMove); message WM_MOVE;
     procedure WMMoving(var aMessage : TMessage); message WM_MOVING;
+    procedure WMSettingChange(var Message: TMessage); message WM_SETTINGCHANGE;
   end;
 
 var
@@ -61,8 +65,8 @@ implementation
 {$R *.res} { index.html }
 
 uses
-  System.Classes, System.StrUtils, Winapi.ShlObj, Winapi.Windows, Vcl.Controls,
-  JsonDataObjects, uWVConstants, uWVLoader;
+  System.Classes, System.StrUtils, System.Win.Registry, Winapi.ShlObj, Winapi.Windows,
+  Vcl.Controls, JsonDataObjects, uWVConstants, uWVLoader;
 
 const
   defAriaNgFileOpenTag  = 'buildVersion:"v';
@@ -70,6 +74,8 @@ const
   defAriaNgFileBuild    = '1.3.5';
 
   defAriaNgDarkMode     = 'dark';
+  defAriaNgLightMode    = 'light';
+  defAriaNgSystemMode   = 'system';
 
   defEdgeAria2FileName  = 'App\index.html';
   defEdgeUserDataName   = 'AriaNgEdge';
@@ -137,6 +143,29 @@ begin
       Exit;
   end;
   Result := 0;
+end;
+
+function TAria2ControlForm.DarkModeIsEnabled: Boolean;
+const
+  defLightThemeValueName = 'AppsUseLightTheme';
+  defPersonalizeKeyName  = 'Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\';
+var
+  Reg: TRegistry;
+begin
+  Result := False;
+  Reg := TRegistry.Create(KEY_READ);
+  with Reg do
+  try
+    RootKey := HKEY_CURRENT_USER;
+    if OpenKey(defPersonalizeKeyName, False) then
+    begin
+      if ValueExists(defLightThemeValueName) then
+        Result := ReadInteger(defLightThemeValueName) = 0;
+      CloseKey;
+    end;
+  finally
+    Free;
+  end;
 end;
 
 procedure TAria2ControlForm.ExtractAriaNgFile(const AFile: string);
@@ -276,8 +305,22 @@ begin
   if S <> FLastTheme then
   begin
     FLastTheme := S;
-    Self.TitleDarkMode := S = defAriaNgDarkMode;
+    SetTitleThemeMode(FLastTheme);
   end;
+end;
+
+procedure TAria2ControlForm.SetTitleThemeMode(const ATheme: string);
+var
+  S: string;
+begin
+  S := ATheme;
+  if S = defAriaNgSystemMode then
+  begin
+    if DarkModeIsEnabled then
+      S := defAriaNgDarkMode
+    else S := defAriaNgLightMode;
+  end;
+  Self.TitleDarkMode := S = defAriaNgDarkMode;
 end;
 
 procedure TAria2ControlForm.WebBrowserAfterCreated(Sender: TObject);
@@ -346,11 +389,11 @@ var
   R: TCoreWebView2NavigationCompletedEventArgs;
   S: string;
 begin
+{$IFDEF DEBUGMESSAGE}
+  OutputDebugString(('WebBrowserNavigationCompleted');
+{$ENDIF}
   R := TCoreWebView2NavigationCompletedEventArgs.Create(aArgs);
   try
-{$IFDEF DEBUGMESSAGE}
-    OutputDebugString(PChar('WebBrowserNavigationCompleted: ' + IntToStr(R.HttpStatusCode)));
-{$ENDIF}
     if R.HttpStatusCode <> 0 then
       Exit;
   finally
@@ -384,6 +427,15 @@ procedure TAria2ControlForm.WMMoving(var aMessage: TMessage);
 begin
   inherited;
   if Assigned(FWebBrowser) then FWebBrowser.NotifyParentWindowPositionChanged;
+end;
+
+procedure TAria2ControlForm.WMSettingChange(var Message: TMessage);
+begin
+{$IFDEF DEBUGMESSAGE}
+  OutputDebugString(('WMSettingChange');
+{$ENDIF}
+  inherited;
+  SetTitleThemeMode(FLastTheme);
 end;
 
 end.
