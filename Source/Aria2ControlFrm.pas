@@ -339,7 +339,7 @@ end;
 procedure TAria2ControlForm.WebBrowserAfterCreated(Sender: TObject);
 begin
 {$IFDEF DEBUGMESSAGE}
-  OutputDebugString(('WebBrowserAfterCreated');
+  OutputDebugString('WebBrowserAfterCreated');
 {$ENDIF}
   FWebWindow.UpdateSize;
 end;
@@ -347,7 +347,7 @@ end;
 procedure TAria2ControlForm.WebBrowserDocumentTitleChanged(Sender: TObject);
 begin
 {$IFDEF DEBUGMESSAGE}
-  OutputDebugString(('WebBrowserDocumentTitleChanged');
+  OutputDebugString('WebBrowserDocumentTitleChanged');
 {$ENDIF}
   Caption := FWebBrowser.DocumentTitle;
 end;
@@ -386,7 +386,7 @@ var
   R: TCoreWebView2WebMessageReceivedEventArgs;
 begin
 {$IFDEF DEBUGMESSAGE}
-  OutputDebugString(('WebBrowserMessageReceived');
+  OutputDebugString('WebBrowserMessageReceived');
 {$ENDIF}
   R := TCoreWebView2WebMessageReceivedEventArgs.Create(aArgs);
   try
@@ -403,7 +403,7 @@ var
   S: string;
 begin
 {$IFDEF DEBUGMESSAGE}
-  OutputDebugString(('WebBrowserNavigationCompleted');
+  OutputDebugString('WebBrowserNavigationCompleted');
 {$ENDIF}
   R := TCoreWebView2NavigationCompletedEventArgs.Create(aArgs);
   try
@@ -445,7 +445,7 @@ end;
 procedure TAria2ControlForm.WMSettingChange(var Message: TMessage);
 begin
 {$IFDEF DEBUGMESSAGE}
-  OutputDebugString(('WMSettingChange');
+  OutputDebugString('WMSettingChange');
 {$ENDIF}
   inherited;
   SetTitleThemeMode(FLastTheme);
