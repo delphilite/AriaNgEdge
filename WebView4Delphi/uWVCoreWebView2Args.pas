@@ -15,9 +15,16 @@ uses
   uWVTypeLibrary, uWVTypes;
 
 type
+  /// <summary>
+  /// Event args for the AcceleratorKeyPressed event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2AcceleratorKeyPressedEventArgs = class
     protected
-      FBaseIntf : ICoreWebView2AcceleratorKeyPressedEventArgs;
+      FBaseIntf  : ICoreWebView2AcceleratorKeyPressedEventArgs;
+      FBaseIntf2 : ICoreWebView2AcceleratorKeyPressedEventArgs2;
 
       function GetInitialized : boolean;
       function GetKeyEventKind : TWVKeyEventKind;
@@ -30,27 +37,174 @@ type
       function GetIsMenuKeyDown : boolean;
       function GetWasKeyDown : boolean;
       function GetIsKeyReleased : boolean;
+      function GetIsBrowserAcceleratorKeyEnabled : boolean;
 
       procedure SetHandled(aValue : boolean);
+      procedure SetIsBrowserAcceleratorKeyEnabled(aValue : boolean);
+
+      procedure InitializeFields;
 
     public
       constructor Create(const aArgs: ICoreWebView2AcceleratorKeyPressedEventArgs); reintroduce;
       destructor  Destroy; override;
 
-      property Initialized    : boolean                                      read GetInitialized;
-      property BaseIntf       : ICoreWebView2AcceleratorKeyPressedEventArgs  read FBaseIntf;
-      property KeyEventKind   : TWVKeyEventKind                              read GetKeyEventKind;
-      property VirtualKey     : LongWord                                     read GetVirtualKey;
-      property KeyEventLParam : integer                                      read GetKeyEventLParam;
-      property RepeatCount    : LongWord                                     read GetRepeatCount;
-      property ScanCode       : LongWord                                     read GetScanCode;
-      property IsExtendedKey  : boolean                                      read GetIsExtendedKey;
-      property IsMenuKeyDown  : boolean                                      read GetIsMenuKeyDown;
-      property WasKeyDown     : boolean                                      read GetWasKeyDown;
-      property IsKeyReleased  : boolean                                      read GetIsKeyReleased;
-      property Handled        : boolean                                      read GetHandled          write SetHandled;
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
+      property Initialized                    : boolean                                      read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
+      property BaseIntf                       : ICoreWebView2AcceleratorKeyPressedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The key event type that caused the event to run.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_keyeventkind">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// </remarks>
+      property KeyEventKind                   : TWVKeyEventKind                              read GetKeyEventKind;
+      /// <summary>
+      /// The Win32 virtual key code of the key that was pressed or released.  It
+      /// is one of the Win32 virtual key constants such as `VK_RETURN` or an
+      /// (uppercase) ASCII value such as `A`.  Verify whether Ctrl or Alt
+      /// are pressed by running `GetKeyState(VK_CONTROL)` or
+      /// `GetKeyState(VK_MENU)`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_virtualkey">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// </remarks>
+      property VirtualKey                     : LongWord                                     read GetVirtualKey;
+      /// <summary>
+      /// The `LPARAM` value that accompanied the window message.  For more
+      /// information, navigate to [WM_KEYDOWN](/windows/win32/inputdev/wm-keydown)
+      /// and [WM_KEYUP](/windows/win32/inputdev/wm-keyup).
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_keyeventlparam">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// </remarks>
+      property KeyEventLParam                 : integer                                      read GetKeyEventLParam;
+      /// <summary>
+      /// Specifies the repeat count for the current message.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property RepeatCount                    : LongWord                                     read GetRepeatCount;
+      /// <summary>
+      /// Specifies the scan code.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property ScanCode                       : LongWord                                     read GetScanCode;
+      /// <summary>
+      /// Indicates that the key is an extended key.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property IsExtendedKey                  : boolean                                      read GetIsExtendedKey;
+      /// <summary>
+      /// Indicates that a menu key is held down (context code).
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property IsMenuKeyDown                  : boolean                                      read GetIsMenuKeyDown;
+      /// <summary>
+      /// Indicates that the key was held down.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property WasKeyDown                     : boolean                                      read GetWasKeyDown;
+      /// <summary>
+      /// Indicates that the key was released.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_physicalkeystatus">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/winrt/microsoft_web_webview2_core/corewebview2physicalkeystatus">See the CoreWebView2PhysicalKeyStatus Struct article.</see></para>
+      /// </remarks>
+      property IsKeyReleased                  : boolean                                      read GetIsKeyReleased;
+      /// <summary>
+      /// During `AcceleratorKeyPressedEvent` handler invocation the WebView is
+      /// blocked waiting for the decision of if the accelerator is handled by the
+      /// host (or not).  If the `Handled` property is set to `TRUE` then this
+      /// prevents the WebView from performing the default action for this
+      /// accelerator key.  Otherwise the WebView performs the default action for
+      /// the accelerator key.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs#get_handled">See the ICoreWebView2AcceleratorKeyPressedEventArgs article.</see></para>
+      /// </remarks>
+      property Handled                        : boolean                                      read GetHandled                          write SetHandled;
+      /// <summary>
+      /// <para>This property allows developers to enable or disable the browser from handling a specific
+      /// browser accelerator key such as Ctrl+P or F3, etc.</para>
+      /// <para>Browser accelerator keys are the keys/key combinations that access features specific to
+      /// a web browser, including but not limited to:</para>
+      /// <code>
+      ///  - Ctrl-F and F3 for Find on Page
+      ///  - Ctrl-P for Print
+      ///  - Ctrl-R and F5 for Reload
+      ///  - Ctrl-Plus and Ctrl-Minus for zooming
+      ///  - Ctrl-Shift-C and F12 for DevTools
+      ///  - Special keys for browser functions, such as Back, Forward, and Search
+      /// </code>
+      /// <para>This property does not disable accelerator keys related to movement and text editing,
+      /// such as:</para>
+      /// <code>
+      ///  - Home, End, Page Up, and Page Down
+      ///  - Ctrl-X, Ctrl-C, Ctrl-V
+      ///  - Ctrl-A for Select All
+      ///  - Ctrl-Z for Undo
+      /// </code>
+      /// <para>The `ICoreWebView2Settings.AreBrowserAcceleratorKeysEnabled` API is a convenient setting
+      /// for developers to disable all the browser accelerator keys together, and sets the default
+      /// value for the `IsBrowserAcceleratorKeyEnabled` property.</para>
+      /// <para>By default, `ICoreWebView2Settings.AreBrowserAcceleratorKeysEnabled` is `TRUE` and
+      /// `IsBrowserAcceleratorKeyEnabled` is `TRUE`.</para>
+      /// <para>When developers change `ICoreWebView2Settings.AreBrowserAcceleratorKeysEnabled` setting to `FALSE`,
+      /// this will change default value for `IsBrowserAcceleratorKeyEnabled` to `FALSE`.</para>
+      /// <para>If developers want specific keys to be handled by the browser after changing the
+      /// `ICoreWebView2Settings.AreBrowserAcceleratorKeysEnabled` setting to `FALSE`, they need to enable
+      /// these keys by setting `IsBrowserAcceleratorKeyEnabled` to `TRUE`.</para>
+      /// <para>This API will give the event arg higher priority over the
+      /// `ICoreWebView2Settings.AreBrowserAcceleratorKeysEnabled` setting when we handle the keys.</para>
+      /// <para>For browser accelerator keys, when an accelerator key is pressed, the propagation and
+      /// processing order is:</para>
+      /// <code>
+      /// 1. A ICoreWebView2Controller.AcceleratorKeyPressed event is raised
+      /// 2. WebView2 browser feature accelerator key handling
+      /// 3. Web Content Handling: If the key combination isn't reserved for browser actions,
+      /// the key event propagates to the web content, where JavaScript event listeners can
+      /// capture and respond to it.
+      /// </code>
+      /// <para>`ICoreWebView2AcceleratorKeyPressedEventArgs` has a `Handled` property, that developers
+      /// can use to mark a key as handled. When the key is marked as handled anywhere along
+      /// the path, the event propagation stops, and web content will not receive the key.
+      /// With `IsBrowserAcceleratorKeyEnabled` property, if developers mark
+      /// `IsBrowserAcceleratorKeyEnabled` as `FALSE`, the browser will skip the WebView2
+      /// browser feature accelerator key handling process, but the event propagation
+      /// continues, and web content will receive the key combination.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2acceleratorkeypressedeventargs2#get_isbrowseracceleratorkeyenabled">See the ICoreWebView2AcceleratorKeyPressedEventArgs2 article.</see></para>
+      /// </remarks>
+      property IsBrowserAcceleratorKeyEnabled : boolean                                      read GetIsBrowserAcceleratorKeyEnabled   write SetIsBrowserAcceleratorKeyEnabled;
   end;
 
+  /// <summary>
+  /// Receives ContentLoading events.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contentloadingeventargs">See the ICoreWebView2ContentLoadingEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ContentLoadingEventArgs = class
     protected
       FBaseIntf : ICoreWebView2ContentLoadingEventArgs;
@@ -63,12 +217,36 @@ type
       constructor Create(const aArgs: ICoreWebView2ContentLoadingEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized  : boolean                               read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf     : ICoreWebView2ContentLoadingEventArgs  read FBaseIntf;
+      /// <summary>
+      /// `TRUE` if the loaded content is an error page.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contentloadingeventargs#get_iserrorpage">See the ICoreWebView2ContentLoadingEventArgs article.</see></para>
+      /// </remarks>
       property IsErrorPage  : boolean                               read GetIsErrorPage;
+      /// <summary>
+      /// The ID of the navigation.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contentloadingeventargs#get_navigationid">See the ICoreWebView2ContentLoadingEventArgs article.</see></para>
+      /// </remarks>
       property NavigationId : uint64                                read GetNavigationId;
   end;
 
+  /// <summary>
+  /// Event args for the DevToolsProtocolEventReceived event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2devtoolsprotocoleventreceivedeventargs">See the ICoreWebView2DevToolsProtocolEventReceivedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2DevToolsProtocolEventReceivedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2DevToolsProtocolEventReceivedEventArgs;
@@ -84,12 +262,39 @@ type
       constructor Create(const aArgs: ICoreWebView2DevToolsProtocolEventReceivedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized           : boolean                                              read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf              : ICoreWebView2DevToolsProtocolEventReceivedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The parameter object of the corresponding `DevToolsProtocol` event
+      /// represented as a JSON string.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2devtoolsprotocoleventreceivedeventargs#get_parameterobjectasjson">See the ICoreWebView2DevToolsProtocolEventReceivedEventArgs article.</see></para>
+      /// </remarks>
       property ParameterObjectAsJson : wvstring                                             read GetParameterObjectAsJson;
+      /// <summary>
+      /// The sessionId of the target where the event originates from.
+      /// Empty string is returned as sessionId if the event comes from the default
+      /// session for the top page.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2devtoolsprotocoleventreceivedeventargs2#get_sessionid">See the ICoreWebView2DevToolsProtocolEventReceivedEventArgs2 article.</see></para>
+      /// </remarks>
       property SessionId             : wvstring                                             read GetSessionId;
   end;
 
+  /// <summary>
+  /// Event args for the MoveFocusRequested event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2movefocusrequestedeventargs">See the ICoreWebView2MoveFocusRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2MoveFocusRequestedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2MoveFocusRequestedEventArgs;
@@ -104,12 +309,42 @@ type
       constructor Create(const aArgs: ICoreWebView2MoveFocusRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized : boolean                                   read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf    : ICoreWebView2MoveFocusRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The reason for WebView to run the `MoveFocusRequested` event.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2movefocusrequestedeventargs#get_reason">See the ICoreWebView2MoveFocusRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Reason      : TWVMoveFocusReason                        read GetReason;
+      /// <summary>
+      /// Indicates whether the event has been handled by the app.  If the app has
+      /// moved the focus to another desired location, it should set the `Handled`
+      /// property to `TRUE`.  When the `Handled` property is `FALSE` after the
+      /// event handler returns, default action is taken.  The default action is to
+      /// try to find the next tab stop child window in the app and try to move
+      /// focus to that window.  If no other window exists to move focus, focus is
+      /// cycled within the web content of the WebView.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2movefocusrequestedeventargs#get_handled">See the ICoreWebView2MoveFocusRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Handled     : boolean                                   read GetHandled      write SetHandled;
   end;
 
+  /// <summary>
+  /// Event args for the NavigationCompleted event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationcompletedeventargs">See the ICoreWebView2NavigationCompletedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2NavigationCompletedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2NavigationCompletedEventArgs;
@@ -127,18 +362,87 @@ type
       constructor Create(const aArgs: ICoreWebView2NavigationCompletedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized    : boolean                                    read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf       : ICoreWebView2NavigationCompletedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// <para>`TRUE` when the navigation is successful.  `FALSE` for a navigation that
+      /// ended up in an error page (failures due to no network, DNS lookup
+      /// failure, HTTP server responds with 4xx), but may also be `FALSE` for
+      /// additional scenarios such as `window.stop()` run on navigated page.</para>
+      /// <para>Note that WebView2 will report the navigation as 'unsuccessful' if the load
+      /// for the navigation did not reach the expected completion for any reason. Such
+      /// reasons include potentially catastrophic issues such network and certificate
+      /// issues, but can also be the result of intended actions such as the app canceling a navigation or
+      /// navigating away before the original navigation completed. Applications should not
+      /// just rely on this flag, but also consider the reported WebErrorStatus to
+      /// determine whether the failure is indeed catastrophic in their context.<para>
+      /// <para>WebErrorStatuses that may indicate a non-catastrophic failure include:</para>
+      /// <para> - COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED</para>
+      /// <para> - COREWEBVIEW2_WEB_ERROR_STATUS_VALID_AUTHENTICATION_CREDENTIALS_REQUIRED</para>
+      /// <para> - COREWEBVIEW2_WEB_ERROR_STATUS_VALID_PROXY_AUTHENTICATION_REQUIRED</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationcompletedeventargs#get_issuccess">See the ICoreWebView2NavigationCompletedEventArgs article.</see></para>
+      /// </remarks>
       property IsSuccess      : boolean                                    read GetIsSuccess;
+      /// <summary>
+      /// The error code if the navigation failed.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationcompletedeventargs#get_weberrorstatus">See the ICoreWebView2NavigationCompletedEventArgs article.</see></para>
+      /// </remarks>
       property WebErrorStatus : TWVWebErrorStatus                          read GetWebErrorStatus;
+      /// <summary>
+      /// The ID of the navigation.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationcompletedeventargs#get_navigationid">See the ICoreWebView2NavigationCompletedEventArgs article.</see></para>
+      /// </remarks>
       property NavigationID   : uint64                                     read GetNavigationID;
+      /// <summary>
+      /// <para>The HTTP status code of the navigation if it involved an HTTP request.
+      /// For instance, this will usually be 200 if the request was successful, 404
+      /// if a page was not found, etc.  See
+      /// https://developer.mozilla.org/docs/Web/HTTP/Status for a list of
+      /// common status codes.</para>
+      /// <para>The `HttpStatusCode` property will be 0 in the following cases:</para>
+      /// <para>* The navigation did not involve an HTTP request.  For instance, if it was
+      ///   a navigation to a file:// URL, or if it was a same-document navigation.</para>
+      /// <para>* The navigation failed before a response was received.  For instance, if
+      ///   the hostname was not found, or if there was a network error.</para>
+      /// <para>In those cases, you can get more information from the `IsSuccess` and
+      /// `WebErrorStatus` properties.</para>
+      /// <para>If the navigation receives a successful HTTP response, but the navigated
+      /// page calls `window.stop()` before it finishes loading, then
+      /// `HttpStatusCode` may contain a success code like 200, but `IsSuccess` will
+      /// be FALSE and `WebErrorStatus` will be
+      /// `COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED`.</para>
+      /// <para>Since WebView2 handles HTTP continuations and redirects automatically, it
+      /// is unlikely for `HttpStatusCode` to ever be in the 1xx or 3xx ranges.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationcompletedeventargs2#get_httpstatuscode">See the ICoreWebView2NavigationCompletedEventArgs2 article.</see></para>
+      /// </remarks>
       property HttpStatusCode : integer                                    read GetHttpStatusCode;
   end;
 
+  /// <summary>
+  /// Event args for the NavigationStarting event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2NavigationStartingEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2NavigationStartingEventArgs;
       FBaseIntf2 : ICoreWebView2NavigationStartingEventArgs2;
+      FBaseIntf3 : ICoreWebView2NavigationStartingEventArgs3;
 
       function  GetInitialized : boolean;
       function  GetURI : wvstring;
@@ -148,6 +452,7 @@ type
       function  GetNavigationID : uint64;
       function  GetRequestHeaders : ICoreWebView2HttpRequestHeaders;
       function  GetAdditionalAllowedFrameAncestors : wvstring;
+      function  GetNavigationKind : TWVNavigationKind;
 
       procedure SetAdditionalAllowedFrameAncestors(const aValue : wvstring);
       procedure SetCancel(aValue : boolean);
@@ -158,21 +463,98 @@ type
       constructor Create(const aArgs: ICoreWebView2NavigationStartingEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                       : boolean                                   read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                          : ICoreWebView2NavigationStartingEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The uri of the requested navigation.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_uri">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property URI                               : wvstring                                  read GetURI;
+      /// <summary>
+      /// `TRUE` when the navigation was initiated through a user gesture as
+      /// opposed to programmatic navigation by page script. Navigations initiated
+      /// via WebView2 APIs are considered as user initiated.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_isuserinitiated">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property IsUserInitiated                   : boolean                                   read GetIsUserInitiated;
+      /// <summary>
+      /// `TRUE` when the navigation is redirected.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_isredirected">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property IsRedirected                      : boolean                                   read GetIsRedirected;
+      /// <summary>
+      /// The host may set this flag to cancel the navigation.  If set, the
+      /// navigation is not longer present and the content of the current page is
+      /// intact.  For performance reasons, `GET` HTTP requests may happen, while
+      /// the host is responding.  You may set cookies and use part of a request
+      /// for the navigation.  Navigations to about schemes are cancellable, unless
+      /// `msWebView2CancellableAboutNavigations` feature flag is disabled.
+      /// Cancellation of frame navigation to `srcdoc` is not supported and
+      /// wil be ignored.  A cancelled navigation will fire a `NavigationCompleted`
+      /// event with a `WebErrorStatus` of
+      /// `COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_cancel">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property Cancel                            : boolean                                   read GetCancel                              write SetCancel;
+      /// <summary>
+      /// The ID of the navigation.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_navigationid">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property NavigationID                      : uint64                                    read GetNavigationID;
+      /// <summary>
+      /// <para>The HTTP request headers for the navigation.</para>
+      /// <para>\>NOTE: You are not able to modify the HTTP request headers in a
+      /// `NavigationStarting` event.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs#get_requestheaders">See the ICoreWebView2NavigationStartingEventArgs article.</see></para>
+      /// </remarks>
       property RequestHeaders                    : ICoreWebView2HttpRequestHeaders           read GetRequestHeaders;
+      /// <summary>
+      /// Get additional allowed frame ancestors set by the host app.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs2#get_additionalallowedframeancestors">See the ICoreWebView2NavigationStartingEventArgs3 article.</see></para>
+      /// </remarks>
       property AdditionalAllowedFrameAncestors   : wvstring                                  read GetAdditionalAllowedFrameAncestors     write SetAdditionalAllowedFrameAncestors;
+      /// <summary>
+      /// Get the navigation kind of this navigation.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2navigationstartingeventargs3#get_navigationkind">See the ICoreWebView2NavigationStartingEventArgs3 article.</see></para>
+      /// </remarks>
+      property NavigationKind                    : TWVNavigationKind                         read GetNavigationKind;
   end;
 
+  /// <summary>
+  /// Event args for the NewWindowRequested event.  The event is run when
+  /// content inside webview requested to a open a new window (through
+  /// window.open() and so on).
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2NewWindowRequestedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2NewWindowRequestedEventArgs;
       FBaseIntf2 : ICoreWebView2NewWindowRequestedEventArgs2;
+      FBaseIntf3 : ICoreWebView2NewWindowRequestedEventArgs3;
 
       function  GetInitialized : boolean;
       function  GetURI : wvstring;
@@ -182,6 +564,7 @@ type
       function  GetDeferral : ICoreWebView2Deferral;
       function  GetWindowFeatures : ICoreWebView2WindowFeatures;
       function  GetName : wvstring;
+      function  GetOriginalSourceFrameInfo : ICoreWebView2FrameInfo;
 
       procedure SetNewWindow(const aValue : ICoreWebView2);
       procedure SetHandled(aValue : boolean);
@@ -192,17 +575,103 @@ type
       constructor Create(const aArgs: ICoreWebView2NewWindowRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
-      property Initialized      : boolean                                   read GetInitialized;
-      property BaseIntf         : ICoreWebView2NewWindowRequestedEventArgs  read FBaseIntf;
-      property URI              : wvstring                                  read GetURI;
-      property NewWindow        : ICoreWebView2                             read GetNewWindow         write SetNewWindow;
-      property Handled          : boolean                                   read GetHandled           write SetHandled;
-      property IsUserInitiated  : boolean                                   read GetIsUserInitiated;
-      property Deferral         : ICoreWebView2Deferral                     read GetDeferral;
-      property WindowFeatures   : ICoreWebView2WindowFeatures               read GetWindowFeatures;
-      property Name             : wvstring                                  read GetName;
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
+      property Initialized             : boolean                                   read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
+      property BaseIntf                : ICoreWebView2NewWindowRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The target uri of the new window requested.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#get_uri">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property URI                     : wvstring                                  read GetURI;
+      /// <summary>
+      /// Gets the new window.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#get_newwindow">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property NewWindow               : ICoreWebView2                             read GetNewWindow         write SetNewWindow;
+      /// <summary>
+      /// Gets whether the `NewWindowRequested` event is handled by host.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#get_handled">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Handled                 : boolean                                   read GetHandled           write SetHandled;
+      /// <summary>
+      /// <para>`TRUE` when the new window request was initiated through a user gesture.
+      /// Examples of user initiated requests are:</para>
+      /// <para>- Selecting an anchor tag with target</para>
+      /// <para>- Programmatic window open from a script that directly run as a result of
+      /// user interaction such as via onclick handlers.</para>
+      /// <para>Non-user initiated requests are programmatic window opens from a script
+      /// that are not directly triggered by user interaction, such as those that
+      /// run while loading a new page or via timers.</para>
+      /// <para>The Microsoft Edge popup blocker is disabled for WebView so the app is
+      /// able to use this flag to block non-user initiated popups.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#get_isuserinitiated">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property IsUserInitiated         : boolean                                   read GetIsUserInitiated;
+      /// <summary>
+      /// Obtain an `ICoreWebView2Deferral` object and put the event into a
+      /// deferred state.  Use the `ICoreWebView2Deferral` object to complete the
+      /// window open request at a later time.  While this event is deferred the
+      /// opener window returns a `WindowProxy` to an un-navigated window, which
+      /// navigates when the deferral is complete.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#getdeferral">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Deferral                : ICoreWebView2Deferral                     read GetDeferral;
+      /// <summary>
+      /// Window features specified by the `window.open`.  The features should be
+      /// considered for positioning and sizing of new webview windows.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs#get_windowfeatures">See the ICoreWebView2NewWindowRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property WindowFeatures          : ICoreWebView2WindowFeatures               read GetWindowFeatures;
+      /// <summary>
+      /// <para>Gets the name of the new window. This window can be created via `window.open(url, windowName)`,
+      /// where the windowName parameter corresponds to `Name` property.</para>
+      /// <para>If no windowName is passed to `window.open`, then the `Name` property
+      /// will be set to an empty string. Additionally, if window is opened through other means,
+      /// such as `<a target="windowName">...</a>` or `<iframe name="windowName">...</iframe>`,
+      /// then the `Name` property will be set accordingly. In the case of target=_blank,
+      /// the `Name` property will be an empty string.</para>
+      /// <para>Opening a window via ctrl+clicking a link would result in the `Name` property
+      /// being set to an empty string.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs2#get_name">See the ICoreWebView2NewWindowRequestedEventArgs2 article.</see></para>
+      /// </remarks>
+      property Name                    : wvstring                                  read GetName;
+      /// <summary>
+      /// The frame info of the frame where the new window request originated. The
+      /// `OriginalSourceFrameInfo` is a snapshot of frame information at the time when the
+      /// new window was requested. See `ICoreWebView2FrameInfo` for details on frame
+      /// properties.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2newwindowrequestedeventargs3#get_originalsourceframeinfo">See the ICoreWebView2NewWindowRequestedEventArgs3 article.</see></para>
+      /// </remarks>
+      property OriginalSourceFrameInfo : ICoreWebView2FrameInfo                    read GetOriginalSourceFrameInfo;
   end;
 
+  /// <summary>
+  /// Event args for the PermissionRequested event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2PermissionRequestedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2PermissionRequestedEventArgs;
@@ -229,21 +698,98 @@ type
       constructor Create(const aArgs: ICoreWebView2PermissionRequestedEventArgs2); reintroduce; overload;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized      : boolean                                    read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf         : ICoreWebView2PermissionRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The origin of the web content that requests the permission.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs#get_uri">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+      /// </remarks>
       property URI              : wvstring                                   read GetURI;
+      /// <summary>
+      /// The status of a permission request, (for example is the request is granted).
+      /// The default value is `COREWEBVIEW2_PERMISSION_STATE_DEFAULT`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs#get_state">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+      /// </remarks>
       property State            : TWVPermissionState                         read GetState             write SetState;
+      /// <summary>
+      /// The type of the permission that is requested.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs#get_permissionkind">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+      /// </remarks>
       property PermissionKind   : TWVPermissionKind                          read GetPermissionKind;
+      /// <summary>
+      /// <para>`TRUE` when the permission request was initiated through a user gesture.</para>
+      /// <para>NOTE: Being initiated through a user gesture does not mean that user intended
+      /// to access the associated resource.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs#get_isuserinitiated">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+      /// </remarks>
       property IsUserInitiated  : boolean                                    read GetIsUserInitiated;
+      /// <summary>
+      /// Gets an `ICoreWebView2Deferral` object.  Use the deferral object to make
+      /// the permission decision at a later time. The deferral only applies to the
+      /// current request, and does not prevent the `OnPermissionRequested` event from
+      /// getting raised for new requests. However, for some permission kinds the
+      /// WebView will avoid creating a new request if there is a pending request of
+      /// the same kind.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs#getdeferral">See the ICoreWebView2PermissionRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Deferral         : ICoreWebView2Deferral                      read GetDeferral;
+      /// <summary>
+      /// <para>By default, both the `OnPermissionRequested` event handlers on the
+      /// `CoreWebView2Frame` and the `CoreWebView2` will be invoked, with the
+      /// `CoreWebView2Frame` event handlers invoked first. The host may
+      /// set this flag to `TRUE` within the `CoreWebView2Frame` event handlers
+      /// to prevent the remaining `CoreWebView2` event handlers from being invoked.</para>
+      /// <para>If a deferral is taken on the event args, then you must synchronously
+      /// set `Handled` to TRUE prior to taking your deferral to prevent the
+      /// `CoreWebView2`s event handlers from being invoked.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs2#get_handled">See the ICoreWebView2PermissionRequestedEventArgs2 article.</see></para>
+      /// </remarks>
       property Handled          : boolean                                    read GetHandled           write SetHandled;
+      /// <summary>
+      /// The permission state set from the `PermissionRequested` event is saved in
+      /// the profile by default; it persists across sessions and becomes the new
+      /// default behavior for future `PermissionRequested` events. Browser
+      /// heuristics can affect whether the event continues to be raised when the
+      /// state is saved in the profile. Set the `SavesInProfile` property to
+      /// `FALSE` to not persist the state beyond the current request, and to
+      /// continue to receive `PermissionRequested`
+      /// events for this origin and permission kind.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2permissionrequestedeventargs3#get_savesinprofile">See the ICoreWebView2PermissionRequestedEventArgs3 article.</see></para>
+      /// </remarks>
       property SavesInProfile   : boolean                                    read GetSavesInProfile    write SetSavesInProfile;
   end;
 
+  /// <summary>
+  /// Event args for the ProcessFailed event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs">See the ICoreWebView2ProcessFailedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ProcessFailedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2ProcessFailedEventArgs;
       FBaseIntf2 : ICoreWebView2ProcessFailedEventArgs2;
+      FBaseIntf3 : ICoreWebView2ProcessFailedEventArgs3;
 
       function GetInitialized : boolean;
       function GetProcessFailedKind : TWVProcessFailedKind;
@@ -251,6 +797,7 @@ type
       function GetExtiCode : integer;
       function GetProcessDescription : wvstring;
       function GetFrameInfosForFailedProcess : ICoreWebView2FrameInfoCollection;
+      function GetFailureSourceModulePath : wvstring;
 
       procedure InitializeFields;
 
@@ -258,15 +805,117 @@ type
       constructor Create(const aArgs: ICoreWebView2ProcessFailedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                : boolean                              read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                   : ICoreWebView2ProcessFailedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The kind of process failure that has occurred. This is a combination of
+      /// process kind (for example, browser, renderer, gpu) and failure (exit,
+      /// unresponsiveness). Renderer processes are further divided in _main frame_
+      /// renderer (`RenderProcessExited`, `RenderProcessUnresponsive`) and
+      /// _subframe_ renderer (`FrameRenderProcessExited`). To learn about the
+      /// conditions under which each failure kind occurs, see
+      /// `COREWEBVIEW2_PROCESS_FAILED_KIND`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs#get_processfailedkind">See the ICoreWebView2ProcessFailedEventArgs article.</see></para>
+      /// </remarks>
       property ProcessFailedKind          : TWVProcessFailedKind                 read GetProcessFailedKind;
+      /// <summary>
+      /// <para>The reason for the process failure. Some of the reasons are only
+      /// applicable to specific values of
+      /// `ICoreWebView2ProcessFailedEventArgs.ProcessFailedKind`, and the
+      /// following `ProcessFailedKind` values always return the indicated reason
+      /// value:</para>
+      /// <code>
+      /// ProcessFailedKind | Reason
+      /// ---|---
+      /// COREWEBVIEW2_PROCESS_FAILED_KIND_BROWSER_PROCESS_EXITED | COREWEBVIEW2_PROCESS_FAILED_REASON_UNEXPECTED
+      /// COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE | COREWEBVIEW2_PROCESS_FAILED_REASON_UNRESPONSIVE
+      /// </code>
+      /// <para>For other `ProcessFailedKind` values, the reason may be any of the reason
+      /// values. To learn about what these values mean, see
+      /// `COREWEBVIEW2_PROCESS_FAILED_REASON`.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs2#get_reason">See the ICoreWebView2ProcessFailedEventArgs2 article.</see></para>
+      /// </remarks>
       property Reason                     : TWVProcessFailedReason               read GetReason;
+      /// <summary>
+      /// The exit code of the failing process, for telemetry purposes. The exit
+      /// code is always `STILL_ACTIVE` (`259`) when `ProcessFailedKind` is
+      /// `COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_UNRESPONSIVE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs2#get_exitcode">See the ICoreWebView2ProcessFailedEventArgs2 article.</see></para>
+      /// </remarks>
       property ExtiCode                   : integer                              read GetExtiCode;
+      /// <summary>
+      /// Description of the process assigned by the WebView2 Runtime. This is a
+      /// technical English term appropriate for logging or development purposes,
+      /// and not localized for the end user. It applies to utility processes (for
+      /// example, "Audio Service", "Video Capture") and plugin processes (for
+      /// example, "Flash"). The returned `processDescription` is empty if the
+      /// WebView2 Runtime did not assign a description to the process.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs2#get_processdescription">See the ICoreWebView2ProcessFailedEventArgs2 article.</see></para>
+      /// </remarks>
       property ProcessDescription         : wvstring                             read GetProcessDescription;
+      /// <summary>
+      /// <para>The collection of `FrameInfo`s for frames in the `ICoreWebView2` that were
+      /// being rendered by the failed process. The content in these frames is
+      /// replaced with an error page.</para>
+      /// <para>This is only available when `ProcessFailedKind` is
+      /// `COREWEBVIEW2_PROCESS_FAILED_KIND_FRAME_RENDER_PROCESS_EXITED`;
+      /// `frames` is `null` for all other process failure kinds, including the case
+      /// in which the failed process was the renderer for the main frame and
+      /// subframes within it, for which the failure kind is
+      /// `COREWEBVIEW2_PROCESS_FAILED_KIND_RENDER_PROCESS_EXITED`.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2processfailedeventargs2#get_frameinfosforfailedprocess">See the ICoreWebView2ProcessFailedEventArgs2 article.</see></para>
+      /// </remarks>
       property FrameInfosForFailedProcess : ICoreWebView2FrameInfoCollection     read GetFrameInfosForFailedProcess;
+      /// <summary>
+      /// <para>This property is the full path of the module that caused the
+      /// crash in cases of Windows Code Integrity failures.</para>
+      /// <para>[Windows Code Integrity](/mem/intune/user-help/you-need-to-enable-code-integrity)
+      /// is a feature that verifies the integrity and
+      /// authenticity of dynamic-link libraries (DLLs)
+      /// on Windows systems. It ensures that only trusted
+      /// code can run on the system and prevents unauthorized or
+      /// malicious modifications.</para>
+      /// <para>When ProcessFailed occurred due to a failed Code Integrity check,
+      /// this property returns the full path of the file that was prevented from
+      /// loading on the system.</para>
+      /// <para>The webview2 process which tried to load the DLL will fail with
+      /// exit code STATUS_INVALID_IMAGE_HASH(-1073740760).</para>
+      /// <para>A file can fail integrity check for various
+      /// reasons, such as:</para>
+      /// <code>
+      /// - It has an invalid or missing signature that does
+      /// not match the publisher or signer of the file.
+      /// - It has been tampered with or corrupted by malware or other software.
+      /// - It has been blocked by an administrator or a security policy.
+      /// </code>
+      /// <para>This property always will be the empty string if failure is not caused by
+      /// STATUS_INVALID_IMAGE_HASH.</para>
+      /// </summary>
+      property FailureSourceModulePath    : wvstring                             read GetFailureSourceModulePath;
   end;
 
+  /// <summary>
+  /// Event args for the ScriptDialogOpening event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ScriptDialogOpeningEventArgs = class
     protected
       FBaseIntf : ICoreWebView2ScriptDialogOpeningEventArgs;
@@ -284,18 +933,85 @@ type
     public
       constructor Create(const aArgs: ICoreWebView2ScriptDialogOpeningEventArgs); reintroduce;
       destructor  Destroy; override;
+      /// <summary>
+      /// The host may run this to respond with **OK** to `confirm`, `prompt`, and
+      /// `beforeunload` dialogs.  Do not run this method to indicate cancel.
+      /// From JavaScript, this means that the `confirm` and `beforeunload` function
+      /// returns `TRUE` if `Accept` is run.  And for the prompt function it returns
+      /// the value of `ResultText` if `Accept` is run and otherwise returns
+      /// `FALSE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#accept">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       function    Accept : boolean;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized : boolean                                    read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf    : ICoreWebView2ScriptDialogOpeningEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The URI of the page that requested the dialog box.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#get_uri">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property URI         : wvstring                                   read GetURI;
+      /// <summary>
+      /// The kind of JavaScript dialog box.  `alert`, `confirm`, `prompt`, or
+      /// `beforeunload`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#get_kind">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property Kind        : TWVScriptDialogKind                        read GetKind;
+      /// <summary>
+      /// The message of the dialog box.  From JavaScript this is the first
+      /// parameter passed to `alert`, `confirm`, and `prompt` and is empty for
+      /// `beforeunload`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#get_message">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property Message_    : wvstring                                   read GetMessage;
+      /// <summary>
+      /// The second parameter passed to the JavaScript prompt dialog.
+      /// The result of the prompt JavaScript function uses this value as the
+      /// default value.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#get_defaulttext">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property DefaultText : wvstring                                   read GetDefaultText;
+      /// <summary>
+      /// The return value from the JavaScript prompt function if `Accept` is run.
+      ///  This value is ignored for dialog kinds other than prompt.  If `Accept`
+      /// is not run, this value is ignored and `FALSE` is returned from prompt.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#get_resulttext">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property ResultText  : wvstring                                   read GetResultText     write SetResultText;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object.  Use this operation to
+      /// complete the event at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2scriptdialogopeningeventargs#getdeferral">See the ICoreWebView2ScriptDialogOpeningEventArgs article.</see></para>
+      /// </remarks>
       property Deferral    : ICoreWebView2Deferral                      read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for the SourceChanged event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2sourcechangedeventargs">See the ICoreWebView2SourceChangedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2SourceChangedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2SourceChangedEventArgs;
@@ -307,11 +1023,29 @@ type
       constructor Create(const aArgs: ICoreWebView2SourceChangedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized   : boolean                              read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf      : ICoreWebView2SourceChangedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// `TRUE` if the page being navigated to is a new document.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2sourcechangedeventargs#get_isnewdocument">See the ICoreWebView2SourceChangedEventArgs article.</see></para>
+      /// </remarks>
       property IsNewDocument : boolean                              read GetIsNewDocument;
   end;
 
+  /// <summary>
+  /// Event args for the WebMessageReceived event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs">See the ICoreWebView2WebMessageReceivedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2WebMessageReceivedEventArgs = class
     protected
       FBaseIntf  : ICoreWebView2WebMessageReceivedEventArgs;
@@ -329,38 +1063,136 @@ type
       constructor Create(const aArgs: ICoreWebView2WebMessageReceivedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized        : boolean                                   read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf           : ICoreWebView2WebMessageReceivedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The URI of the document that sent this web message.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs#get_source">See the ICoreWebView2WebMessageReceivedEventArgs article.</see></para>
+      /// </remarks>
       property Source             : wvstring                                  read GetSource;
+      /// <summary>
+      /// The message posted from the WebView content to the host converted to a
+      /// JSON string.  Run this operation to communicate using JavaScript objects.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs#get_webmessageasjson">See the ICoreWebView2WebMessageReceivedEventArgs article.</see></para>
+      /// </remarks>
       property WebMessageAsJson   : wvstring                                  read GetWebMessageAsJson;
+      /// <summary>
+      /// If the message posted from the WebView content to the host is a string
+      /// type, this method returns the value of that string.  If the message
+      /// posted is some other kind of JavaScript type this method fails with the
+      /// following error.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs#trygetwebmessageasstring">See the ICoreWebView2WebMessageReceivedEventArgs article.</see></para>
+      /// </remarks>
       property WebMessageAsString : wvstring                                  read GetWebMessageAsString;
+      /// <summary>
+      /// Additional received WebMessage objects. To pass `additionalObjects` via
+      /// WebMessage to the app, use the
+      /// `chrome.webview.postMessageWithAdditionalObjects` content API.
+      /// Any DOM object type that can be natively representable that has been
+      /// passed in to `additionalObjects` parameter will be accessible here.
+      /// Currently a WebMessage object can be the `ICoreWebView2File` type.
+      /// Entries in the collection can be `nullptr` if `null` or `undefined` was
+      /// passed.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webmessagereceivedeventargs2#get_additionalobjects">See the ICoreWebView2WebMessageReceivedEventArgs2 article.</see></para>
+      /// </remarks>
       property AdditionalObjects  : ICoreWebView2ObjectCollectionView         read GetAdditionalObjects;
   end;
 
+  /// <summary>
+  /// Event args for the WebResourceRequested event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs">See the ICoreWebView2WebResourceRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2WebResourceRequestedEventArgs = class
     protected
-      FBaseIntf : ICoreWebView2WebResourceRequestedEventArgs;
+      FBaseIntf  : ICoreWebView2WebResourceRequestedEventArgs;
+      FBaseIntf2 : ICoreWebView2WebResourceRequestedEventArgs2;
 
       function  GetInitialized : boolean;
       function  GetRequest : ICoreWebView2WebResourceRequest;
       function  GetResponse : ICoreWebView2WebResourceResponse;
       function  GetDeferral : ICoreWebView2Deferral;
       function  GetResourceContext : TWVWebResourceContext;
+      function  GetRequestedSourceKind : TWVWebResourceRequestSourceKind;
 
       procedure SetResponse(const aValue : ICoreWebView2WebResourceResponse);
+
+      procedure InitializeFields;
 
     public
       constructor Create(const aArgs: ICoreWebView2WebResourceRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
-      property Initialized     : boolean                                     read GetInitialized;
-      property BaseIntf        : ICoreWebView2WebResourceRequestedEventArgs  read FBaseIntf;
-      property Request         : ICoreWebView2WebResourceRequest             read GetRequest;
-      property Response        : ICoreWebView2WebResourceResponse            read GetResponse         write SetResponse;
-      property Deferral        : ICoreWebView2Deferral                       read GetDeferral;
-      property ResourceContext : TWVWebResourceContext                       read GetResourceContext;
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
+      property Initialized         : boolean                                     read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
+      property BaseIntf            : ICoreWebView2WebResourceRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The Web resource request.  The request object may be missing some headers
+      /// that are added by network stack at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs#get_request">See the ICoreWebView2WebResourceRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Request             : ICoreWebView2WebResourceRequest             read GetRequest;
+      /// <summary>
+      /// A placeholder for the web resource response object.  If this object is
+      /// set, the web resource request is completed with the specified response.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs#get_response">See the ICoreWebView2WebResourceRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Response            : ICoreWebView2WebResourceResponse            read GetResponse         write SetResponse;
+      /// <summary>
+      /// Obtain an `ICoreWebView2Deferral` object and put the event into a
+      /// deferred state.  Use the `ICoreWebView2Deferral` object to complete the
+      /// request at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs#getdeferral">See the ICoreWebView2WebResourceRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Deferral            : ICoreWebView2Deferral                       read GetDeferral;
+      /// <summary>
+      /// The web resource request context.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs#get_resourcecontext">See the ICoreWebView2WebResourceRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property ResourceContext     : TWVWebResourceContext                       read GetResourceContext;
+      /// <summary>
+      /// The web resource requested source.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourcerequestedeventargs2#get_requestedsourcekind">See the ICoreWebView2WebResourceRequestedEventArgs2 article.</see></para>
+      /// </remarks>
+      property RequestedSourceKind : TWVWebResourceRequestSourceKind             read GetRequestedSourceKind;
   end;
 
+  /// <summary>
+  /// Event args for the BrowserProcessExited event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2browserprocessexitedeventargs">See the ICoreWebView2BrowserProcessExitedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2BrowserProcessExitedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2BrowserProcessExitedEventArgs;
@@ -373,12 +1205,36 @@ type
       constructor Create(const aArgs: ICoreWebView2BrowserProcessExitedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized            : boolean                                     read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf               : ICoreWebView2BrowserProcessExitedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The kind of browser process exit that has occurred.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2browserprocessexitedeventargs#get_browserprocessexitkind">See the ICoreWebView2BrowserProcessExitedEventArgs article.</see></para>
+      /// </remarks>
       property BrowserProcessExitKind : TWVBrowserProcessExitKind                   read GetBrowserProcessExitKind;
+      /// <summary>
+      /// The process ID of the browser process that has exited.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2browserprocessexitedeventargs#get_browserprocessid">See the ICoreWebView2BrowserProcessExitedEventArgs article.</see></para>
+      /// </remarks>
       property BrowserProcessId       : cardinal                                    read GetBrowserProcessId;
   end;
 
+  /// <summary>
+  /// Event args for the WebResourceResponseReceived event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourceresponsereceivedeventargs">See the ICoreWebView2WebResourceResponseReceivedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2WebResourceResponseReceivedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2WebResourceResponseReceivedEventArgs;
@@ -391,12 +1247,40 @@ type
       constructor Create(const aArgs: ICoreWebView2WebResourceResponseReceivedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized : boolean                                            read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf    : ICoreWebView2WebResourceResponseReceivedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The request object for the web resource, as committed. This includes
+      /// headers added by the network stack that were not be included during the
+      /// associated WebResourceRequested event, such as Authentication headers.
+      /// Modifications to this object have no effect on how the request is
+      /// processed as it has already been sent.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourceresponsereceivedeventargs#get_request">See the ICoreWebView2WebResourceResponseReceivedEventArgs article.</see></para>
+      /// </remarks>
       property Request     : ICoreWebView2WebResourceRequest                    read GetRequest;
+      /// <summary>
+      /// View of the response object received for the web resource.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2webresourceresponsereceivedeventargs#get_response">See the ICoreWebView2WebResourceResponseReceivedEventArgs article.</see></para>
+      /// </remarks>
       property Response    : ICoreWebView2WebResourceResponseView               read GetResponse;
   end;
 
+  /// <summary>
+  /// Event args for the DOMContentLoaded event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2domcontentloadedeventargs">See the ICoreWebView2DOMContentLoadedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2DOMContentLoadedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2DOMContentLoadedEventArgs;
@@ -408,11 +1292,29 @@ type
       constructor Create(const aArgs: ICoreWebView2DOMContentLoadedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized  : boolean                                 read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf     : ICoreWebView2DOMContentLoadedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The ID of the navigation which corresponds to other navigation ID properties on other navigation events.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2domcontentloadedeventargs#get_navigationid">See the ICoreWebView2DOMContentLoadedEventArgs article.</see></para>
+      /// </remarks>
       property NavigationId : uint64                                  read GetNavigationId;
   end;
 
+  /// <summary>
+  /// Event args for the FrameCreated events.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2framecreatedeventargs">See the ICoreWebView2FrameCreatedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2FrameCreatedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2FrameCreatedEventArgs;
@@ -424,11 +1326,29 @@ type
       constructor Create(const aArgs: ICoreWebView2FrameCreatedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized  : boolean                             read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf     : ICoreWebView2FrameCreatedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The frame which was created.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2framecreatedeventargs#get_frame">See the ICoreWebView2FrameCreatedEventArgs article.</see></para>
+      /// </remarks>
       property Frame        : ICoreWebView2Frame                  read GetFrame;
   end;
 
+  /// <summary>
+  /// Event args for the DownloadStarting event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2DownloadStartingEventArgs = class
     protected
       FBaseIntf : ICoreWebView2DownloadStartingEventArgs;
@@ -448,21 +1368,77 @@ type
       constructor Create(const aArgs: ICoreWebView2DownloadStartingEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized        : boolean                                 read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf           : ICoreWebView2DownloadStartingEventArgs  read FBaseIntf;
+      /// <summary>
+      /// Returns the `ICoreWebView2DownloadOperation` for the download that
+      /// has started.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs#get_downloadoperation">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+      /// </remarks>
       property DownloadOperation  : ICoreWebView2DownloadOperation          read GetDownloadOperation;
+      /// <summary>
+      /// The host may set this flag to cancel the download. If canceled, the
+      /// download save dialog is not displayed regardless of the
+      /// `Handled` property.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs#get_cancel">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+      /// </remarks>
       property Cancel             : boolean                                 read GetCancel              write SetCancel;
+      /// <summary>
+      /// The path to the file. If setting the path, the host should ensure that it
+      /// is an absolute path, including the file name, and that the path does not
+      /// point to an existing file. If the path points to an existing file, the
+      /// file will be overwritten. If the directory does not exist, it is created.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs#get_resultfilepath">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+      /// </remarks>
       property ResultFilePath     : wvstring                                read GetResultFilePath      write SetResultFilePath;
+      /// <summary>
+      /// The host may set this flag to `TRUE` to hide the default download dialog
+      /// for this download. The download will progress as normal if it is not
+      /// canceled, there will just be no default UI shown. By default the value is
+      /// `FALSE` and the default download dialog is shown.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs#get_handled">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+      /// </remarks>
       property Handled            : boolean                                 read GetHandled             write SetHandled;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object.  Use this operation to
+      /// complete the event at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2downloadstartingeventargs#getdeferral">See the ICoreWebView2DownloadStartingEventArgs article.</see></para>
+      /// </remarks>
       property Deferral           : ICoreWebView2Deferral                   read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for the ClientCertificateRequested event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ClientCertificateRequestedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2ClientCertificateRequestedEventArgs;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       function  GetInitialized : boolean;
       function  GetHost : wvstring;
+      function  GetPort : integer;
       function  GetIsProxy : boolean;
       function  GetAllowedCertificateAuthorities : ICoreWebView2StringCollection;
       function  GetMutuallyTrustedCertificates : ICoreWebView2ClientCertificateCollection;
@@ -479,18 +1455,104 @@ type
       constructor Create(const aArgs: ICoreWebView2ClientCertificateRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                   : boolean                                           read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                      : ICoreWebView2ClientCertificateRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// <para>Host name of the server that requested client certificate authentication.
+      /// Normalization rules applied to the hostname are:</para>
+      /// <para>* Convert to lowercase characters for ascii characters.</para>
+      /// <para>* Punycode is used for representing non ascii characters.</para>
+      /// <para>* Strip square brackets for IPV6 address.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_host">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Host                          : wvstring                                          read GetHost;
+      /// <summary>
+      /// Port of the server that requested client certificate authentication.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_port">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
+      property Port                          : integer                                           read GetPort;
+      /// <summary>
+      /// Returns true if the server that issued this request is an http proxy.
+      /// Returns false if the server is the origin server.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_isproxy">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property IsProxy                       : boolean                                           read GetIsProxy;
+      /// <summary>
+      /// Returns the `ICoreWebView2StringCollection`.
+      /// The collection contains Base64 encoding of DER encoded distinguished names of
+      /// certificate authorities allowed by the server.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_allowedcertificateauthorities">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property AllowedCertificateAuthorities : ICoreWebView2StringCollection                     read GetAllowedCertificateAuthorities;
+      /// <summary>
+      /// Returns the `ICoreWebView2ClientCertificateCollection` when client
+      /// certificate authentication is requested. The collection contains mutually
+      /// trusted CA certificates.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_mutuallytrustedcertificates">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property MutuallyTrustedCertificates   : ICoreWebView2ClientCertificateCollection          read GetMutuallyTrustedCertificates;
+      /// <summary>
+      /// Returns the selected certificate.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_selectedcertificate">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property SelectedCertificate           : ICoreWebView2ClientCertificate                    read GetSelectedCertificate             write SetSelectedCertificate;
+      /// <summary>
+      /// You may set this flag to cancel the certificate selection. If canceled,
+      /// the request is aborted regardless of the `Handled` property. By default the
+      /// value is `FALSE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_cancel">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Cancel                        : boolean                                           read GetCancel                          write SetCancel;
+      /// <summary>
+      /// You may set this flag to `TRUE` to respond to the server with or
+      /// without a certificate. If this flag is `TRUE` with a `SelectedCertificate`
+      /// it responds to the server with the selected certificate otherwise respond to the
+      /// server without a certificate. By default the value of `Handled` and `Cancel` are `FALSE`
+      /// and display default client certificate selection dialog prompt to allow the user to
+      /// choose a certificate. The `SelectedCertificate` is ignored unless `Handled` is set `TRUE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#get_handled">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Handled                       : boolean                                           read GetHandled                         write SetHandled;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object. Use this operation to
+      /// complete the event at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2clientcertificaterequestedeventargs#getdeferral">See the ICoreWebView2ClientCertificateRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Deferral                      : ICoreWebView2Deferral                             read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for the BasicAuthenticationRequested event. Will contain the
+  /// request that led to the HTTP authorization challenge, the challenge
+  /// and allows the host to provide authentication response or cancel the request.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2BasicAuthenticationRequestedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2BasicAuthenticationRequestedEventArgs;
@@ -508,15 +1570,64 @@ type
       constructor Create(const aArgs: ICoreWebView2BasicAuthenticationRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                   : boolean                                             read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                      : ICoreWebView2BasicAuthenticationRequestedEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The URI that led to the authentication challenge. For proxy authentication
+      /// requests, this will be the URI of the proxy server.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs#get_uri">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Uri                           : wvstring                                            read GetUri;
+      /// <summary>
+      /// The authentication challenge string.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs#get_challenge">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Challenge                     : wvstring                                            read GetChallenge;
+      /// <summary>
+      /// Response to the authentication request with credentials. This object will be populated by the app
+      /// if the host would like to provide authentication credentials.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs#get_response">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Response                      : ICoreWebView2BasicAuthenticationResponse            read GetResponse;
+      /// <summary>
+      /// Cancel the authentication request. False by default.
+      /// If set to true, Response will be ignored.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs#get_cancel">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Cancel                        : boolean                                             read GetCancel           write SetCancel;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object. Use this deferral to
+      /// defer the decision to show the Basic Authentication dialog.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationrequestedeventargs#getdeferral">See the ICoreWebView2BasicAuthenticationRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Deferral                      : ICoreWebView2Deferral                               read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for the ContextMenuRequested event. Will contain the selection information
+  /// and a collection of all of the default context menu items that the WebView
+  /// would show. Allows the app to draw its own context menu or add/remove
+  /// from the default context menu.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ContextMenuRequestedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2ContextMenuRequestedEventArgs;
@@ -536,16 +1647,68 @@ type
       constructor Create(const aArgs: ICoreWebView2ContextMenuRequestedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                   : boolean                                             read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                      : ICoreWebView2ContextMenuRequestedEventArgs          read FBaseIntf;
+      /// <summary>
+      /// Gets the collection of `ContextMenuItem` objects.
+      /// See `ICoreWebView2ContextMenuItemCollection` for more details.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#get_menuitems">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property MenuItems                     : ICoreWebView2ContextMenuItemCollection              read GetMenuItems;
+      /// <summary>
+      /// Gets the target information associated with the requested context menu.
+      /// See `ICoreWebView2ContextMenuTarget` for more details.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#get_contextmenutarget">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property ContextMenuTarget             : ICoreWebView2ContextMenuTarget                      read GetContextMenuTarget;
+      /// <summary>
+      /// Gets the coordinates where the context menu request occurred in relation to the upper
+      /// left corner of the WebView bounds.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#get_location">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Location                      : TPoint                                              read GetLocation;
+      /// <summary>
+      /// Gets the selected CommandId.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#get_selectedcommandid">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property SelectedCommandId             : integer                                             read GetSelectedCommandId    write SetSelectedCommandId;
+      /// <summary>
+      /// Gets whether the `ContextMenuRequested` event is handled by host.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#get_handled">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Handled                       : boolean                                             read GetHandled              write SetHandled;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object. Use this operation to
+      /// complete the event when the custom context menu is closed.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenurequestedeventargs#getdeferral">See the ICoreWebView2ContextMenuRequestedEventArgs article.</see></para>
+      /// </remarks>
       property Deferral                      : ICoreWebView2Deferral                               read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for the ServerCertificateErrorDetected event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+  /// </remarks>
   TCoreWebView2ServerCertificateErrorDetectedEventArgs = class
     protected
       FBaseIntf : ICoreWebView2ServerCertificateErrorDetectedEventArgs;
@@ -563,15 +1726,176 @@ type
       constructor Create(const aArgs: ICoreWebView2ServerCertificateErrorDetectedEventArgs); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                   : boolean                                              read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                      : ICoreWebView2ServerCertificateErrorDetectedEventArgs read FBaseIntf;
+      /// <summary>
+      /// The TLS error code for the invalid certificate.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs#get_errorstatus">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+      /// </remarks>
       property ErrorStatus                   : TWVWebErrorStatus                                    read GetErrorStatus;
+      /// <summary>
+      /// URI associated with the request for the invalid certificate.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs#get_requesturi">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+      /// </remarks>
       property RequestUri                    : wvstring                                             read GetRequestUri;
+      /// <summary>
+      /// Returns the server certificate.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs#get_servercertificate">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+      /// </remarks>
       property ServerCertificate             : ICoreWebView2Certificate                             read GetServerCertificate;
+      /// <summary>
+      /// The action of the server certificate error detection.
+      /// The default value is `COREWEBVIEW2_SERVER_CERTIFICATE_ERROR_ACTION_DEFAULT`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs#get_action">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+      /// </remarks>
       property Action                        : TWVServerCertificateErrorAction                      read GetAction              write SetAction;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object. Use this operation to
+      /// complete the event at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2servercertificateerrordetectedeventargs#getdeferral">See the ICoreWebView2ServerCertificateErrorDetectedEventArgs article.</see></para>
+      /// </remarks>
       property Deferral                      : ICoreWebView2Deferral                                read GetDeferral;
   end;
 
+  /// <summary>
+  /// Event args for LaunchingExternalUriScheme event.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+  /// </remarks>
+  TCoreWebView2LaunchingExternalUriSchemeEventArgs = class
+    protected
+      FBaseIntf : ICoreWebView2LaunchingExternalUriSchemeEventArgs;
+
+      function  GetInitialized : boolean;
+      function  GetUri : wvstring;
+      function  GetInitiatingOrigin : wvstring;
+      function  GetIsUserInitiated : boolean;
+      function  GetCancel : boolean;
+      function  GetDeferral : ICoreWebView2Deferral;
+
+      procedure SetCancel(aValue : boolean);
+
+    public
+      constructor Create(const aArgs: ICoreWebView2LaunchingExternalUriSchemeEventArgs); reintroduce;
+      destructor  Destroy; override;
+
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
+      property Initialized                   : boolean                                           read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
+      property BaseIntf                      : ICoreWebView2LaunchingExternalUriSchemeEventArgs  read FBaseIntf;
+      /// <summary>
+      /// The URI with the external URI scheme to be launched.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs#get_uri">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+      /// </remarks>
+      property Uri                           : wvstring                                          read GetUri;
+      /// <summary>
+      /// <para>The origin initiating the external URI scheme launch.</para>
+      /// <para>The origin will be an empty string if the request is initiated by calling
+      /// `CoreWebView2.Navigate` on the external URI scheme. If a script initiates
+      /// the navigation, the `InitiatingOrigin` will be the top-level document's
+      /// `Source`, for example, if `window.location` is set to `"calculator://"`, the
+      /// `InitiatingOrigin` will be set to `calculator://`. If the request is initiated
+      ///  from a child frame, the `InitiatingOrigin` will be the source of that child frame.</para>
+      /// <para>If the `InitiatingOrigin` is
+      /// [opaque](https://html.spec.whatwg.org/multipage/origin.html#concept-origin-opaque),
+      /// the `InitiatingOrigin` reported in the event args will be its precursor origin.
+      /// The precursor origin is the origin that created the opaque origin. For example, if
+      /// a frame on example.com opens a subframe with a different opaque origin, the subframe's
+      /// precursor origin is example.com.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs#get_initiatingorigin">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+      /// </remarks>
+      property InitiatingOrigin              : wvstring                                          read GetInitiatingOrigin;
+      /// <summary>
+      /// <para>`TRUE` when the external URI scheme request was initiated through a user gesture.</para>
+      /// <para>\>NOTE: Being initiated through a user gesture does not mean that user intended
+      /// to access the associated resource.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs#get_isuserinitiated">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+      /// </remarks>
+      property IsUserInitiated               : boolean                                           read GetIsUserInitiated;
+      /// <summary>
+      /// <para>The event handler may set this property to `TRUE` to cancel the external URI scheme
+      /// launch. If set to `TRUE`, the external URI scheme will not be launched, and the default
+      /// dialog is not displayed. This property can be used to replace the normal
+      /// handling of launching an external URI scheme.</para>
+      /// <para>The initial value of the `Cancel` property is `FALSE`.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs#get_cancel">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+      /// </remarks>
+      property Cancel                        : boolean                                           read GetCancel             write SetCancel;
+      /// <summary>
+      /// Returns an `ICoreWebView2Deferral` object.  Use this operation to
+      /// complete the event at a later time.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2launchingexternalurischemeeventargs#getdeferral">See the ICoreWebView2LaunchingExternalUriSchemeEventArgs article.</see></para>
+      /// </remarks>
+      property Deferral                      : ICoreWebView2Deferral                             read GetDeferral;
+  end;
+
+  /// <summary>
+  /// This is the Interface for non-client region change event args.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2nonclientregionchangedeventargs">See the ICoreWebView2NonClientRegionChangedEventArgs article.</see></para>
+  /// </remarks>
+  TCoreWebView2NonClientRegionChangedEventArgs = class
+    protected
+      FBaseIntf : ICoreWebView2NonClientRegionChangedEventArgs;
+
+      function  GetInitialized : boolean;
+      function  GetRegionKind : TWVNonClientRegionKind;
+
+    public
+      constructor Create(const aArgs: ICoreWebView2NonClientRegionChangedEventArgs); reintroduce;
+      destructor  Destroy; override;
+
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
+      property Initialized                   : boolean                                           read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
+      property BaseIntf                      : ICoreWebView2NonClientRegionChangedEventArgs      read FBaseIntf;
+      /// <summary>
+      /// This property represents the COREWEBVIEW2_NON_CLIENT_REGION_KIND which the
+      /// region changed event corresponds to. With this property an app can query
+      /// for a collection of rects which have that region kind by using
+      /// QueryNonClientRegion on the composition controller.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2nonclientregionchangedeventargs#get_regionkind">See the ICoreWebView2NonClientRegionChangedEventArgs article.</see></para>
+      /// </remarks>
+      property RegionKind                    : TWVNonClientRegionKind                            read GetRegionKind;
+  end;
 
 implementation
 
@@ -584,14 +1908,25 @@ constructor TCoreWebView2AcceleratorKeyPressedEventArgs.Create(const aArgs: ICor
 begin
   inherited Create;
 
+  InitializeFields;
+
   FBaseIntf := aArgs;
+
+  if Initialized then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2AcceleratorKeyPressedEventArgs2, FBaseIntf2);
 end;
 
 destructor TCoreWebView2AcceleratorKeyPressedEventArgs.Destroy;
 begin
-  FBaseIntf := nil;
+  InitializeFields;
 
   inherited Destroy;
+end;
+
+procedure TCoreWebView2AcceleratorKeyPressedEventArgs.InitializeFields;
+begin
+  FBaseIntf  := nil;
+  FBaseIntf2 := nil;
 end;
 
 function TCoreWebView2AcceleratorKeyPressedEventArgs.GetInitialized : boolean;
@@ -694,10 +2029,25 @@ begin
             (TempStatus.IsKeyReleased <> 0);
 end;
 
+function TCoreWebView2AcceleratorKeyPressedEventArgs.GetIsBrowserAcceleratorKeyEnabled : boolean;
+var
+  TempResult : integer;
+begin
+  Result := assigned(FBaseIntf2) and
+            succeeded(FBaseIntf2.Get_IsBrowserAcceleratorKeyEnabled(TempResult)) and
+            (TempResult <> 0);
+end;
+
 procedure TCoreWebView2AcceleratorKeyPressedEventArgs.SetHandled(aValue : boolean);
 begin
   if Initialized then
     FBaseIntf.Set_Handled(ord(aValue));
+end;
+
+procedure TCoreWebView2AcceleratorKeyPressedEventArgs.SetIsBrowserAcceleratorKeyEnabled(aValue : boolean);
+begin
+  if assigned(FBaseIntf2) then
+    FBaseIntf2.Set_IsBrowserAcceleratorKeyEnabled(ord(aValue));
 end;
 
 
@@ -935,8 +2285,9 @@ begin
 
   FBaseIntf := aArgs;
 
-  if Initialized then
-    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NavigationStartingEventArgs2, FBaseIntf2);
+  if Initialized and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NavigationStartingEventArgs2, FBaseIntf2) then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NavigationStartingEventArgs3, FBaseIntf3);
 end;
 
 destructor TCoreWebView2NavigationStartingEventArgs.Destroy;
@@ -950,6 +2301,7 @@ procedure TCoreWebView2NavigationStartingEventArgs.InitializeFields;
 begin
   FBaseIntf  := nil;
   FBaseIntf2 := nil;
+  FBaseIntf3 := nil;
 end;
 
 function TCoreWebView2NavigationStartingEventArgs.GetInitialized : boolean;
@@ -1037,6 +2389,18 @@ begin
     end;
 end;
 
+function TCoreWebView2NavigationStartingEventArgs.GetNavigationKind : TWVNavigationKind;
+var
+  TempResult : COREWEBVIEW2_NAVIGATION_KIND;
+begin
+  TempResult := COREWEBVIEW2_NAVIGATION_KIND_RELOAD;
+  Result     := TempResult;
+
+  if assigned(FBaseIntf3) and
+     succeeded(FBaseIntf3.Get_NavigationKind(TempResult)) then
+    Result := TempResult;
+end;
+
 procedure TCoreWebView2NavigationStartingEventArgs.SetAdditionalAllowedFrameAncestors(const aValue : wvstring);
 begin
   if assigned(FBaseIntf2) then
@@ -1060,8 +2424,9 @@ begin
 
   FBaseIntf := aArgs;
 
-  if Initialized then
-    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NewWindowRequestedEventArgs2, FBaseIntf2);
+  if Initialized and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NewWindowRequestedEventArgs2, FBaseIntf2) then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2NewWindowRequestedEventArgs3, FBaseIntf3);
 end;
 
 destructor TCoreWebView2NewWindowRequestedEventArgs.Destroy;
@@ -1075,6 +2440,7 @@ procedure TCoreWebView2NewWindowRequestedEventArgs.InitializeFields;
 begin
   FBaseIntf  := nil;
   FBaseIntf2 := nil;
+  FBaseIntf3 := nil;
 end;
 
 function TCoreWebView2NewWindowRequestedEventArgs.GetInitialized : boolean;
@@ -1169,6 +2535,19 @@ begin
       Result := TempString;
       CoTaskMemFree(TempString);
     end;
+end;
+
+function TCoreWebView2NewWindowRequestedEventArgs.GetOriginalSourceFrameInfo : ICoreWebView2FrameInfo;
+var
+  TempFrameInfo : ICoreWebView2FrameInfo;
+begin
+  Result        := nil;
+  TempFrameInfo := nil;
+
+  if (FBaseIntf3 <> nil) and
+     succeeded(FBaseIntf3.Get_OriginalSourceFrameInfo(TempFrameInfo)) and
+     (TempFrameInfo <> nil) then
+    Result := TempFrameInfo;
 end;
 
 procedure TCoreWebView2NewWindowRequestedEventArgs.SetNewWindow(const aValue : ICoreWebView2);
@@ -1338,8 +2717,9 @@ begin
 
   FBaseIntf := aArgs;
 
-  if Initialized then
-    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ProcessFailedEventArgs2, FBaseIntf2);
+  if Initialized and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ProcessFailedEventArgs2, FBaseIntf2) then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ProcessFailedEventArgs3, FBaseIntf3);
 end;
 
 destructor TCoreWebView2ProcessFailedEventArgs.Destroy;
@@ -1353,6 +2733,7 @@ procedure TCoreWebView2ProcessFailedEventArgs.InitializeFields;
 begin
   FBaseIntf  := nil;
   FBaseIntf2 := nil;
+  FBaseIntf3 := nil;
 end;
 
 function TCoreWebView2ProcessFailedEventArgs.GetInitialized : boolean;
@@ -1422,6 +2803,22 @@ begin
      succeeded(FBaseIntf2.Get_FrameInfosForFailedProcess(TempResult)) and
      (TempResult <> nil) then
     Result := TempResult;
+end;
+
+function TCoreWebView2ProcessFailedEventArgs.GetFailureSourceModulePath : wvstring;
+var
+  TempString : PWideChar;
+begin
+  Result     := '';
+  TempString := nil;
+
+  if assigned(FBaseIntf3) and
+     succeeded(FBaseIntf3.Get_FailureSourceModulePath(TempString)) and
+     (TempString <> nil) then
+    begin
+      Result := TempString;
+      CoTaskMemFree(TempString);
+    end;
 end;
 
 
@@ -1675,14 +3072,25 @@ constructor TCoreWebView2WebResourceRequestedEventArgs.Create(const aArgs: ICore
 begin
   inherited Create;
 
+  InitializeFields;
+
   FBaseIntf := aArgs;
+
+  if Initialized then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2WebResourceRequestedEventArgs2, FBaseIntf2);
 end;
 
 destructor TCoreWebView2WebResourceRequestedEventArgs.Destroy;
 begin
-  FBaseIntf := nil;
+  InitializeFields;
 
   inherited Destroy;
+end;
+
+procedure TCoreWebView2WebResourceRequestedEventArgs.InitializeFields;
+begin
+  FBaseIntf  := nil;
+  FBaseIntf2 := nil;
 end;
 
 function TCoreWebView2WebResourceRequestedEventArgs.GetInitialized : boolean;
@@ -1737,7 +3145,18 @@ begin
      succeeded(FBaseIntf.Get_ResourceContext(TempContext)) then
     Result := TempContext
    else
-    Result := 0;
+    Result := COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL;
+end;
+
+function TCoreWebView2WebResourceRequestedEventArgs.GetRequestedSourceKind : TWVWebResourceRequestSourceKind;
+var
+  TempResult : COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS;
+begin
+  if assigned(FBaseIntf2) and
+     succeeded(FBaseIntf2.Get_RequestedSourceKind(TempResult)) then
+    Result := TempResult
+   else
+    Result := COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS_NONE;
 end;
 
 procedure TCoreWebView2WebResourceRequestedEventArgs.SetResponse(const aValue : ICoreWebView2WebResourceResponse);
@@ -2039,6 +3458,16 @@ begin
       Result := TempString;
       CoTaskMemFree(TempString);
     end;
+end;
+
+function TCoreWebView2ClientCertificateRequestedEventArgs.GetPort : integer;
+var
+  TempPort : Integer;
+begin
+  if Initialized and succeeded(FBaseIntf.Get_Port(TempPort)) then
+    Result := TempPort
+   else
+    Result := 0;
 end;
 
 function TCoreWebView2ClientCertificateRequestedEventArgs.GetIsProxy : boolean;
@@ -2429,6 +3858,128 @@ procedure TCoreWebView2ServerCertificateErrorDetectedEventArgs.SetAction(aValue:
 begin
   if Initialized then
     FBaseIntf.Set_Action(aValue);
+end;
+
+
+// TCoreWebView2LaunchingExternalUriSchemeEventArgs
+
+constructor TCoreWebView2LaunchingExternalUriSchemeEventArgs.Create(const aArgs: ICoreWebView2LaunchingExternalUriSchemeEventArgs);
+begin
+  inherited Create;
+
+  FBaseIntf := aArgs;
+end;
+
+destructor TCoreWebView2LaunchingExternalUriSchemeEventArgs.Destroy;
+begin
+  FBaseIntf := nil;
+
+  inherited Destroy;
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetInitialized : boolean;
+begin
+  Result := assigned(FBaseIntf);
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetUri : wvstring;
+var
+  TempString : PWideChar;
+begin
+  Result     := '';
+  TempString := nil;
+
+  if Initialized and
+     succeeded(FBaseIntf.Get_Uri(TempString)) then
+    begin
+      Result := TempString;
+      CoTaskMemFree(TempString);
+    end;
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetInitiatingOrigin : wvstring;
+var
+  TempString : PWideChar;
+begin
+  Result     := '';
+  TempString := nil;
+
+  if Initialized and
+     succeeded(FBaseIntf.Get_InitiatingOrigin(TempString)) then
+    begin
+      Result := TempString;
+      CoTaskMemFree(TempString);
+    end;
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetIsUserInitiated: boolean;
+var
+  TempInt : integer;
+begin
+  Result := Initialized and
+            succeeded(FBaseIntf.Get_IsUserInitiated(TempInt)) and
+            (TempInt <> 0);
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetCancel: boolean;
+var
+  TempInt : integer;
+begin
+  Result := Initialized and
+            succeeded(FBaseIntf.Get_Cancel(TempInt)) and
+            (TempInt <> 0);
+end;
+
+function TCoreWebView2LaunchingExternalUriSchemeEventArgs.GetDeferral: ICoreWebView2Deferral;
+var
+  TempResult : ICoreWebView2Deferral;
+begin
+  Result     := nil;
+  TempResult := nil;
+
+  if Initialized and
+     succeeded(FBaseIntf.GetDeferral(TempResult)) and
+     (TempResult <> nil) then
+    Result := TempResult;
+end;
+
+procedure TCoreWebView2LaunchingExternalUriSchemeEventArgs.SetCancel(aValue: boolean);
+begin
+  if Initialized then
+    FBaseIntf.Set_Cancel(ord(aValue));
+end;
+
+
+// TCoreWebView2NonClientRegionChangedEventArgs
+
+constructor TCoreWebView2NonClientRegionChangedEventArgs.Create(const aArgs: ICoreWebView2NonClientRegionChangedEventArgs);
+begin
+  inherited Create;
+
+  FBaseIntf := aArgs;
+end;
+
+destructor TCoreWebView2NonClientRegionChangedEventArgs.Destroy;
+begin
+  FBaseIntf := nil;
+
+  inherited Destroy;
+end;
+
+function TCoreWebView2NonClientRegionChangedEventArgs.GetInitialized : boolean;
+begin
+  Result := assigned(FBaseIntf);
+end;
+
+function TCoreWebView2NonClientRegionChangedEventArgs.GetRegionKind : TWVNonClientRegionKind;
+var
+  TempResult : COREWEBVIEW2_NON_CLIENT_REGION_KIND;
+begin
+  Result := COREWEBVIEW2_NON_CLIENT_REGION_KIND_NOWHERE;
+
+  if Initialized and
+     succeeded(FBaseIntf.Get_RegionKind(TempResult)) then
+    Result := TempResult;
 end;
 
 end.

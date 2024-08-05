@@ -10,6 +10,14 @@ uses
   uWVTypeLibrary;
 
 type
+  /// <summary>
+  /// Collection of FrameInfos (name and source). Used to list the affected
+  /// frames' info when a frame-only render process failure occurs in the
+  /// ICoreWebView2.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollection">See the ICoreWebView2FrameInfoCollection article.</see></para>
+  /// </remarks>
   TCoreWebView2FrameInfoCollection = class
     protected
       FBaseIntf : ICoreWebView2FrameInfoCollection;
@@ -21,8 +29,20 @@ type
       constructor Create(const aBaseIntf : ICoreWebView2FrameInfoCollection); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized : boolean                                  read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf    : ICoreWebView2FrameInfoCollection         read FBaseIntf;
+      /// <summary>
+      /// Gets an iterator over the collection of `FrameInfo`s.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollection#getiterator">See the ICoreWebView2FrameInfoCollection article.</see></para>
+      /// </remarks>
       property Iterator    : ICoreWebView2FrameInfoCollectionIterator read GetIterator;
   end;
 

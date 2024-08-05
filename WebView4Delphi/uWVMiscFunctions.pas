@@ -22,6 +22,7 @@ function LowestChromiumVersion : wvstring;
 function LowestLoaderDLLVersion : wvstring;
 function EnvironmentCreationErrorToString(aErrorCode : HRESULT) : wvstring;
 function ControllerCreationErrorToString(aErrorCode : HRESULT) : wvstring;
+function ControllerOptionsCreationErrorToString(aErrorCode : HRESULT) : wvstring;
 function CompositionControllerCreationErrorToString(aErrorCode : HRESULT) : wvstring;
 function GetScreenDPI : integer;
 function GetDeviceScaleFactor : single;
@@ -69,6 +70,10 @@ const
     function SetWindowLongPtr(hWnd: HWND; nIndex: Integer; dwNewLong: LongInt): LongInt; stdcall; external user32 name 'SetWindowLongW';
   {$ENDIF}
 {$ENDIF}
+
+{$IFNDEF FPC}{$IFNDEF DELPHI7_UP}
+function PosEx(const SubStr, S: string; Offset: Cardinal = 1): Integer;
+{$ENDIF}{$ENDIF}
 
 implementation
 
@@ -150,12 +155,29 @@ const
   ERROR_INVALID_STATE       = 5023;
 begin
   case aErrorCode of
-    E_ABORT : Result := 'The parent window was destroyed before the controller creation was finished.';
+    E_ABORT      : Result := 'The parent window was destroyed before the controller creation was finished.';
+    E_UNEXPECTED : Result := 'The runtime does not have permissions to the user data folder.';
+
     else
-      if (aErrorCode = HResultFromWin32(ERROR_INVALID_STATE)) then
+     if (aErrorCode = HResultFromWin32(ERROR_INVALID_STATE)) then
         Result := 'Another browser is using the same user data folder.'
        else
-        Result := 'Unexpected error result.';
+        if (aErrorCode = HResultFromWin32(ERROR_NOT_SUPPORTED)) then
+          Result := 'The request is not supported.'
+         else
+          Result := 'Unexpected error result.';
+  end;
+end;
+
+function ControllerOptionsCreationErrorToString(aErrorCode : HRESULT) : wvstring;
+const
+  UI_E_WRONG_THREAD = HRESULT($802A000C);
+begin
+  case aErrorCode of
+    E_INVALIDARG      : Result := 'Invalid profile name.';
+    E_NOTIMPL         : Result := 'Not implemented.';  // This error code is not documented. It's caused by an outdated WebView2 Runtime installation.
+    UI_E_WRONG_THREAD : Result := 'This method can only be called from the thread that created the object.';
+    else                Result := 'Unexpected error result.';
   end;
 end;
 
@@ -165,7 +187,9 @@ const
   ERROR_INVALID_STATE       = 5023;
 begin
   case aErrorCode of
-    E_ABORT : Result := 'The parent window was destroyed before the composition controller creation was finished.';
+    E_ABORT      : Result := 'The parent window was destroyed before the composition controller creation was finished.';
+    E_UNEXPECTED : Result := 'The runtime does not have permissions to the user data folder.';
+
     else
       if (aErrorCode = HResultFromWin32(ERROR_INVALID_STATE)) then
         Result := 'Another browser is using the same user data folder.'
@@ -204,7 +228,7 @@ end;
 procedure OutputDebugMessage(const aMessage : string);
 begin
   {$IFDEF DEBUG}
-  OutputDebugString({$IFNDEF DELPHI16_UP}PAnsiChar{$ELSE}PWideChar{$ENDIF}(aMessage + #0));
+  OutputDebugString({$IFDEF DELPHI12_UP}PWideChar{$ELSE}PAnsiChar{$ENDIF}(aMessage + #0));
   {$ENDIF}
 end;
 
@@ -687,5 +711,21 @@ begin
           inc(i);
         end;
 end;
+
+{$IFNDEF FPC}{$IFNDEF DELPHI7_UP}
+function PosEx(const SubStr, S: string; Offset: Cardinal = 1): Integer;
+var
+  TempString : string;
+begin
+  if Offset <= 1 then
+    Result := Pos(SubStr, S)
+   else
+    begin
+      TempString := copy(S, Offset, length(S));
+      Result     := Pos(SubStr, TempString);
+      if (Result > 0) then inc(Result, Offset - 1);
+    end;
+end;
+{$ENDIF}{$ENDIF}
 
 end.

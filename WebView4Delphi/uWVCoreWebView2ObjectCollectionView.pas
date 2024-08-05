@@ -10,6 +10,12 @@ uses
   uWVTypeLibrary;
 
 type
+  /// <summary>
+  /// Read-only collection of generic objects.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2objectcollectionview">See the ICoreWebView2ObjectCollectionView article.</see></para>
+  /// </remarks>
   TCoreWebView2ObjectCollectionView = class
     protected
       FBaseIntf : ICoreWebView2ObjectCollectionView;
@@ -22,9 +28,28 @@ type
       constructor Create(const aBaseIntf : ICoreWebView2ObjectCollectionView); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized           : boolean                                      read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf              : ICoreWebView2ObjectCollectionView            read FBaseIntf;
+      /// <summary>
+      /// Gets the number of items in the collection.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2objectcollectionview#get_count">See the ICoreWebView2ObjectCollectionView article.</see></para>
+      /// </remarks>
       property Count                 : cardinal                                     read GetCount;
+      /// <summary>
+      /// Gets the object at the specified index. Cast the object to the native type
+      /// to access its specific properties.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2objectcollectionview#getvalueatindex">See the ICoreWebView2ObjectCollectionView article.</see></para>
+      /// </remarks>
       property Items[idx : cardinal] : IUnknown                                     read GetValueAtIndex;
   end;
 

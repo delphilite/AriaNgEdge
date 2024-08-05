@@ -10,6 +10,14 @@ uses
   uWVTypeLibrary;
 
 type
+  /// <summary>
+  /// Iterator for a collection of FrameInfos. For more info, see
+  /// ICoreWebView2ProcessFailedEventArgs2 and
+  /// ICoreWebView2FrameInfoCollection.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollectioniterator">See the ICoreWebView2FrameInfoCollectionIterator article.</see></para>
+  /// </remarks>
   TCoreWebView2FrameInfoCollectionIterator = class
     protected
       FBaseIntf : ICoreWebView2FrameInfoCollectionIterator;
@@ -21,13 +29,45 @@ type
     public
       constructor Create(const aBaseIntf : ICoreWebView2FrameInfoCollectionIterator); reintroduce;
       destructor  Destroy; override;
+      /// <summary>
+      /// Move the iterator to the next `FrameInfo` in the collection.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollectioniterator#movenext">See the ICoreWebView2FrameInfoCollectionIterator article.</see></para>
+      /// </remarks>
       function    MoveNext : boolean;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized : boolean                                    read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf    : ICoreWebView2FrameInfoCollectionIterator   read FBaseIntf;
+      /// <summary>
+      /// `TRUE` when the iterator has not run out of `FrameInfo`s.  If the
+      /// collection over which the iterator is iterating is empty or if the
+      /// iterator has gone past the end of the collection, then this is `FALSE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollectioniterator#get_hascurrent">See the ICoreWebView2FrameInfoCollectionIterator article.</see></para>
+      /// </remarks>
       property HasCurrent  : boolean                                    read GetHasCurrent;
+      /// <summary>
+      /// Get the current `ICoreWebView2FrameInfo` of the iterator.
+      /// Returns `HRESULT_FROM_WIN32(ERROR_INVALID_INDEX)` if HasCurrent is
+      /// `FALSE`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frameinfocollectioniterator#getcurrent">See the ICoreWebView2FrameInfoCollectionIterator article.</see></para>
+      /// </remarks>
       property Current     : ICoreWebView2FrameInfo                     read GetCurrent;
   end;
+
+  {
+    function MoveNext(out hasNext: Integer): HResult; stdcall;
+  }
 
 implementation
 

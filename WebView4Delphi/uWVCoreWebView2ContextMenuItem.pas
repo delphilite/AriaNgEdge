@@ -15,9 +15,16 @@ uses
   uWVTypeLibrary, uWVTypes;
 
 type
+  /// <summary>
+  /// Represents a context menu item of a context menu displayed by WebView.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem">See the ICoreWebView2ContextMenuItem article.</see></para>
+  /// </remarks>
   TCoreWebView2ContextMenuItem = class
     protected
-      FBaseIntf : ICoreWebView2ContextMenuItem;
+      FBaseIntf                : ICoreWebView2ContextMenuItem;
+      FCustomItemSelectedToken : EventRegistrationToken;
 
       function  GetInitialized : boolean;
       function  GetName : wvstring;
@@ -33,21 +40,102 @@ type
       procedure SetIsEnabled(aValue : boolean);
       procedure SetIsChecked(aValue : boolean);
 
+      procedure InitializeFields;
+      procedure InitializeTokens;
+      procedure RemoveAllEvents;
+
+      function  AddCustomItemSelectedEvent(const aBrowserComponent : TComponent) : boolean;
+
     public
       constructor Create(const aBaseIntf : ICoreWebView2ContextMenuItem); reintroduce;
       destructor  Destroy; override;
-      function    AddCustomItemSelectedEvent(const aBrowserComponent : TComponent) : boolean;
-
+      /// <summary>
+      /// Adds all the events of this class to an existing TWVBrowserBase instance.
+      /// </summary>
+      /// <param name="aBrowserComponent">The TWVBrowserBase instance.</param>
+      function    AddAllBrowserEvents(const aBrowserComponent : TComponent) : boolean;
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized              : boolean                                  read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                 : ICoreWebView2ContextMenuItem             read FBaseIntf                     write FBaseIntf;
+      /// <summary>
+      /// Gets the unlocalized name for the `ContextMenuItem`. Use this to
+      /// distinguish between context menu item types. This will be the English
+      /// label of the menu item in lower camel case. For example, the "Save as"
+      /// menu item will be "saveAs". Extension menu items will be "extension",
+      /// custom menu items will be "custom" and spellcheck items will be
+      /// "spellCheck".
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_name">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property Name                     : wvstring                                 read GetName;
+      /// <summary>
+      /// Gets the localized label for the `ContextMenuItem`. Will contain an
+      /// ampersand for characters to be used as keyboard accelerator.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_label">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property Label_                   : wvstring                                 read GetLabel;
+      /// <summary>
+      /// Gets the Command ID for the `ContextMenuItem`. Use this to report the
+      /// `SelectedCommandId` in `ContextMenuRequested` event.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_commandid">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property CommandId                : integer                                  read GetCommandId;
+      /// <summary>
+      /// Gets the localized keyboard shortcut for this ContextMenuItem. It will be
+      /// the empty string if there is no keyboard shortcut. This is text intended
+      /// to be displayed to the end user to show the keyboard shortcut. For example
+      /// this property is Ctrl+Shift+I for the "Inspect" `ContextMenuItem`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_shortcutkeydescription">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property ShortcutKeyDescription   : wvstring                                 read GetShortcutKeyDescription;
+      /// <summary>
+      /// Gets the Icon for the `ContextMenuItem` in PNG, Bitmap or SVG formats in the form of an IStream.
+      /// Stream will be rewound to the start of the image data.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_icon">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property Icon                     : IStream                                  read GetIcon;
+      /// <summary>
+      /// Gets the `ContextMenuItem` kind.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_kind">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property Kind                     : TWVMenuItemKind                          read GetKind;
+      /// <summary>
+      /// Gets the enabled property of the `ContextMenuItem`.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_isenabled">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property IsEnabled                : boolean                                  read GetIsEnabled                  write SetIsEnabled;
+      /// <summary>
+      /// Gets the checked property of the `ContextMenuItem`, used if the kind is Check box or Radio.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_ischecked">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property IsChecked                : boolean                                  read GetIsChecked                  write SetIsChecked;
+      /// <summary>
+      /// Gets the list of children menu items through a `ContextMenuItemCollection`
+      /// if the kind is Submenu. If the kind is not submenu, will return null.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2contextmenuitem#get_children">See the ICoreWebView2ContextMenuItem article.</see></para>
+      /// </remarks>
       property Children                 : ICoreWebView2ContextMenuItemCollection   read GetChildren;
   end;
 
@@ -60,19 +148,47 @@ constructor TCoreWebView2ContextMenuItem.Create(const aBaseIntf: ICoreWebView2Co
 begin
   inherited Create;
 
+  InitializeFields;
+
   FBaseIntf := aBaseIntf;
 end;
 
 destructor TCoreWebView2ContextMenuItem.Destroy;
 begin
-  FBaseIntf := nil;
-
-  inherited Destroy;
+  try
+    RemoveAllEvents;
+    InitializeFields;
+  finally
+    inherited Destroy;
+  end;
 end;
 
 function TCoreWebView2ContextMenuItem.GetInitialized : boolean;
 begin
   Result := assigned(FBaseIntf);
+end;
+
+procedure TCoreWebView2ContextMenuItem.InitializeFields;
+begin
+  FBaseIntf := nil;
+
+  InitializeTokens;
+end;
+
+procedure TCoreWebView2ContextMenuItem.InitializeTokens;
+begin
+  FCustomItemSelectedToken.value := 0;
+end;
+
+procedure TCoreWebView2ContextMenuItem.RemoveAllEvents;
+begin
+  if Initialized then
+    begin
+      if (FCustomItemSelectedToken.value <> 0) then
+        FBaseIntf.remove_CustomItemSelected(FCustomItemSelectedToken);
+
+      InitializeTokens;
+    end;
 end;
 
 function TCoreWebView2ContextMenuItem.GetName : wvstring;
@@ -203,17 +319,23 @@ end;
 
 function TCoreWebView2ContextMenuItem.AddCustomItemSelectedEvent(const aBrowserComponent : TComponent) : boolean;
 var
-  TempToken : EventRegistrationToken;
+  TempHandler : ICoreWebView2CustomItemSelectedEventHandler;
 begin
   Result := False;
 
-  if Initialized then
-    begin
-      TempToken.value := 0;
-      Result          := succeeded(FBaseIntf.add_CustomItemSelected(TWVBrowserBase(aBrowserComponent).CustomItemSelectedEventHandler, TempToken));
+  if Initialized and (FCustomItemSelectedToken.value = 0) then
+    try
+      TempHandler := TCoreWebView2CustomItemSelectedEventHandler.Create(TWVBrowserBase(aBrowserComponent));
+      Result      := succeeded(FBaseIntf.add_CustomItemSelected(TempHandler, FCustomItemSelectedToken));
+    finally
+      TempHandler := nil;
     end;
 end;
 
+function TCoreWebView2ContextMenuItem.AddAllBrowserEvents(const aBrowserComponent : TComponent) : boolean;
+begin
+  Result := AddCustomItemSelectedEvent(aBrowserComponent);
+end;
 
 end.
 

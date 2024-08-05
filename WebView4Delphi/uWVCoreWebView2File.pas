@@ -10,6 +10,15 @@ uses
   uWVTypeLibrary, uWVTypes;
 
 type
+  /// <summary>
+  /// Representation of a DOM
+  /// [File](https://developer.mozilla.org/docs/Web/API/File) object
+  /// passed via WebMessage. You can use this object to obtain the path of a
+  /// File dropped on WebView2.
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2file">See the ICoreWebView2File article.</see></para>
+  /// </remarks>
   TCoreWebView2File = class
     protected
       FBaseIntf : ICoreWebView2File;
@@ -21,8 +30,20 @@ type
       constructor Create(const aBaseIntf : ICoreWebView2File); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized    : boolean                     read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf       : ICoreWebView2File           read FBaseIntf           write FBaseIntf;
+      /// <summary>
+      /// Get the absolute file path.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2file#get_path">See the ICoreWebView2File article.</see></para>
+      /// </remarks>
       property Path           : wvstring                    read GetPath;
   end;
 

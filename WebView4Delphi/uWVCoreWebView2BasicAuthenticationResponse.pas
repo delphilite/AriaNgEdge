@@ -10,6 +10,13 @@ uses
   uWVTypeLibrary, uWVTypes;
 
 type
+  /// <summary>
+  /// Represents a Basic HTTP authentication response that contains a user name
+  /// and a password as according to RFC7617 (https://tools.ietf.org/html/rfc7617)
+  /// </summary>
+  /// <remarks>
+  /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationresponse">See the ICoreWebView2BasicAuthenticationResponse article.</see></para>
+  /// </remarks>
   TCoreWebView2BasicAuthenticationResponse = class
     protected
       FBaseIntf : ICoreWebView2BasicAuthenticationResponse;
@@ -25,9 +32,27 @@ type
       constructor Create(const aBaseIntf : ICoreWebView2BasicAuthenticationResponse); reintroduce;
       destructor  Destroy; override;
 
+      /// <summary>
+      /// Returns true when the interface implemented by this class is fully initialized.
+      /// </summary>
       property Initialized                         : boolean                                   read GetInitialized;
+      /// <summary>
+      /// Returns the interface implemented by this class.
+      /// </summary>
       property BaseIntf                            : ICoreWebView2BasicAuthenticationResponse  read FBaseIntf                            write FBaseIntf;
+      /// <summary>
+      /// User name provided for authentication.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationresponse#get_username">See the ICoreWebView2BasicAuthenticationResponse article.</see></para>
+      /// </remarks>
       property UserName                            : wvstring                                  read GetUserName                          write SetUserName;
+      /// <summary>
+      /// Password provided for authentication.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2basicauthenticationresponse#get_password">See the ICoreWebView2BasicAuthenticationResponse article.</see></para>
+      /// </remarks>
       property Password                            : wvstring                                  read GetPassword                          write SetPassword;
   end;
 

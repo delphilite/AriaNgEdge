@@ -16,6 +16,9 @@ uses
 
 type
   {$IFNDEF FPC}{$IFDEF DELPHI16_UP}[ComponentPlatformsAttribute(pidWin32 or pidWin64)]{$ENDIF}{$ENDIF}
+  /// <summary>
+  /// Parent control used by VCL and LCL applications to show the web contents.
+  /// </summary>
   TWVWindowParent = class(TWVWinControl)
     protected
       FBrowser : TWVBrowserBase;
@@ -31,9 +34,15 @@ type
     public
       constructor Create(AOwner : TComponent); override;
       procedure   UpdateSize; override;
+      /// <summary>
+      /// Moves focus into WebView.
+      /// </summary>
       procedure   SetFocus; override;
 
     published
+      /// <summary>
+      /// Browser associated to this control to show web contents.
+      /// </summary>
       property Browser     : TWVBrowserBase   read GetBrowser     write SetBrowser;
   end;
 
@@ -97,8 +106,17 @@ end;
 procedure TWVWindowParent.WndProc(var aMessage: TMessage);
 begin
   case aMessage.Msg of
+    WM_SETFOCUS:
+      begin
+        if (FBrowser <> nil) then
+          FBrowser.SetFocus;
+
+        inherited WndProc(aMessage);
+      end;
+
     WM_ERASEBKGND:
-      if (ChildWindowHandle = 0) then inherited WndProc(aMessage);
+      if (ChildWindowHandle = 0) then
+        inherited WndProc(aMessage);
 
     else inherited WndProc(aMessage);
   end;
