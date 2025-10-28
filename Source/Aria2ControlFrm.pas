@@ -225,8 +225,9 @@ begin
     Interval := 300;
     OnTimer := WebBrowserInitTimer;
   end;
-
+{
   Self.RoundedCorners := rcOff;
+}
 end;
 
 procedure TAria2ControlForm.FormShow(Sender: TObject);

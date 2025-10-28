@@ -25,17 +25,17 @@
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<VerInfo_MinorVer>3</VerInfo_MinorVer>
-			<VerInfo_Build>6</VerInfo_Build>
-			<VerInfo_Release>6</VerInfo_Release>
+			<VerInfo_Build>11</VerInfo_Build>
+			<VerInfo_Release>11</VerInfo_Release>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
 			<Icon_MainIcon>AriaNg.ico</Icon_MainIcon>
 			<DCC_ImageBase>00400000</DCC_ImageBase>
-			<VerInfo_Keys>CompanyName=Super Studio;FileDescription=AriaNg;FileVersion=1.3.6.6;InternalName=AriaNg;LegalCopyright=;LegalTrademarks=;OriginalFilename=AriaNg;ProductName=AriaNg;ProductVersion=2023.05.16;Comments=AriaNg, a modern web frontend making aria2 easier to use.</VerInfo_Keys>
+			<VerInfo_Keys>CompanyName=Super Studio;FileDescription=AriaNg;FileVersion=1.3.11.11;InternalName=AriaNg;LegalCopyright=;LegalTrademarks=;OriginalFilename=AriaNg;ProductName=AriaNg;ProductVersion=2025.10.25;Comments=AriaNg, a modern web frontend making aria2 easier to use.</VerInfo_Keys>
 			<Manifest_File>AriaNg.manifest</Manifest_File>
 			<DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;Winapi;System.Win;$(DCC_Namespace)</DCC_Namespace>
 			<DCC_UnitSearchPath>..\WebView4Delphi;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
 			<DCC_ExeOutput>..\Bin\$(Platform)</DCC_ExeOutput>
-			<VerInfo_Locale>2052</VerInfo_Locale>
+			<VerInfo_Locale>1033</VerInfo_Locale>
 			<DCC_K>false</DCC_K>
 			<DCC_N>false</DCC_N>
 			<DCC_S>false</DCC_S>
