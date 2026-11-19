@@ -20,7 +20,7 @@ uses
   uWVCoreWebView2Environment, uWVCoreWebView2Controller,
   uWVCoreWebView2PrintSettings, uWVCoreWebView2CompositionController,
   uWVCoreWebView2CookieManager, uWVCoreWebView2Delegates,
-  uWVCoreWebView2Profile;
+  uWVCoreWebView2Profile, uWVCoreWebView2FindOptions, uWVCoreWebView2Find;
 
 type
   /// <summary>
@@ -36,6 +36,8 @@ type
       FCoreWebView2CompositionController               : TCoreWebView2CompositionController;
       FCoreWebView2                                    : TCoreWebView2;
       FCoreWebView2Profile                             : TCoreWebView2Profile;
+      FCoreWebView2FindOptions                         : TCoreWebView2FindOptions;
+      FCoreWebView2Find                                : TCoreWebView2Find;
       FWindowParentHandle                              : THandle;
       FUseDefaultEnvironment                           : boolean;
       FUseCompositionController                        : boolean;
@@ -55,6 +57,8 @@ type
       FProfileGetBrowserExtensionsCompletedHandler     : ICoreWebView2ProfileGetBrowserExtensionsCompletedHandler;
       FPreferredTrackingPreventionLevel                : TWVTrackingPreventionLevel;
       FScriptLocale                                    : wvstring;
+      FDefaultBackgroundColor                          : TColor;
+      FAllowHostInputProcessing                        : boolean;
 
       // Fields used to create the environment
       FAdditionalBrowserArguments                      : wvstring;
@@ -176,6 +180,32 @@ type
       FOnProfileDeleted                               : TOnProfileDeletedEvent;
       FOnExecuteScriptWithResultCompleted             : TOnExecuteScriptWithResultCompletedEvent;
       FOnNonClientRegionChanged                       : TOnNonClientRegionChangedEvent;
+      FOnNotificationReceived                         : TOnNotificationReceivedEvent;
+      FOnNotificationCloseRequested                   : TOnNotificationCloseRequestedEvent;
+      FOnSaveAsUIShowing                              : TOnSaveAsUIShowingEvent;
+      FOnShowSaveAsUICompleted                        : TOnShowSaveAsUICompletedEvent;
+      FOnSaveFileSecurityCheckStarting                : TOnSaveFileSecurityCheckStartingEvent;
+      FOnScreenCaptureStarting                        : TOnScreenCaptureStartingEvent;
+      FOnFrameScreenCaptureStarting                   : TOnFrameScreenCaptureStartingEvent;
+      FOnFrameChildFrameCreated                       : TOnFrameChildFrameCreatedEvent;
+      FOnFindActiveMatchIndexChanged                  : TOnFindActiveMatchIndexChangedEvent;
+      FOnFindMatchCountChanged                        : TOnFindMatchCountChangedEvent;
+      FOnFindStartCompleted                           : TOnFindStartCompletedEvent;
+      FOnDragStarting                                 : TOnDragStartingEvent;
+      FOnDedicatedWorkerCreated                       : TOnDedicatedWorkerCreatedEvent;
+      FOnDedicatedWorkerCreated2                      : TOnDedicatedWorkerCreated2Event;
+      FOnDedicatedWorkerDestroying                    : TOnDedicatedWorkerDestroyingEvent;
+      FOnDedicatedWorkerWebMessageReceived            : TOnDedicatedWorkerWebMessageReceivedEvent;
+      FOnFrameDedicatedWorkerCreated                  : TOnFrameDedicatedWorkerCreatedEvent;
+      FOnServiceWorkerDestroying                      : TOnServiceWorkerDestroyingEvent;
+      FOnServiceWorkerWebMessageReceived              : TOnServiceWorkerWebMessageReceivedEvent;
+      FOnServiceWorkerRegistered                      : TOnServiceWorkerRegisteredEvent;
+      FOnGetServiceWorkerRegistrationsCompleted       : TOnGetServiceWorkerRegistrationsCompletedEvent;
+      FOnServiceWorkerActivated                       : TOnServiceWorkerActivatedEvent;
+      FOnServiceWorkerRegistrationUnregistering       : TOnServiceWorkerRegistrationUnregisteringEvent;
+      FOnSharedWorkerCreated                          : TOnSharedWorkerCreatedEvent;
+      FOnGetSharedWorkersCompleted                    : TOnGetSharedWorkersCompletedEvent;
+      FOnSharedWorkerDestroying                       : TOnSharedWorkerDestroyingEvent;
 
       function  GetBrowserProcessID : cardinal;
       function  GetBrowserVersionInfo : wvstring;
@@ -240,6 +270,9 @@ type
       function  GetProfileIsGeneralAutofillEnabled : boolean;
       function  GetMemoryUsageTargetLevel : TWVMemoryUsageTargetLevel;
       function  GetFrameID : cardinal;
+      function  GetAreWebViewScriptApisEnabledForServiceWorkers : boolean;
+      function  GetServiceWorkerManager : ICoreWebView2ServiceWorkerManager;
+      function  GetSharedWorkerManager : ICoreWebView2SharedWorkerManager;
 
       procedure SetBuiltInErrorPageEnabled(aValue: boolean);
       procedure SetDefaultContextMenusEnabled(aValue: boolean);
@@ -283,6 +316,7 @@ type
       procedure SetProfileIsPasswordAutosaveEnabled(aValue : boolean);
       procedure SetProfileIsGeneralAutofillEnabled(aValue : boolean);
       procedure SetMemoryUsageTargetLevel(aValue : TWVMemoryUsageTargetLevel);
+      procedure SetAreWebViewScriptApisEnabledForServiceWorkers(aValue : boolean);
 
       function  CreateEnvironment : boolean;
       function  CreateCompositionController: boolean;
@@ -293,9 +327,12 @@ type
       procedure DestroyCompositionController;
       procedure DestroyWebView;
       procedure DestroyProfile;
+      procedure DestroyFindOptions;
+      procedure DestroyFind;
       procedure DestroySettings;
       procedure DestroyPrintSettings;
 
+      procedure CalculateZoomStep;
       procedure UpdateZoomStep(aInc : boolean);
       procedure UpdateZoomPct(const aValue : double);
 
@@ -314,9 +351,9 @@ type
       function  ExtractJSONData(const aJSON: wvstring; var aData: wvstring) : boolean; virtual;
       function  ExtractEncodedJSON(const aJSON: wvstring): wvstring;
 
-      function EnvironmentCompletedHandler_Invoke(errorCode: HRESULT; const createdEnvironment: ICoreWebView2Environment): HRESULT;
-      function ControllerCompletedHandler_Invoke(errorCode: HRESULT; const createdController: ICoreWebView2Controller): HRESULT;
-      function ExecuteScriptCompletedHandler_Invoke(errorCode: HRESULT; resultObjectAsJson: PWideChar; aExecutionID : integer): HRESULT;
+      function EnvironmentCompletedHandler_Invoke(errorCode: HRESULT; const result_: ICoreWebView2Environment): HRESULT;
+      function ControllerCompletedHandler_Invoke(errorCode: HRESULT; const result_: ICoreWebView2Controller): HRESULT;
+      function ExecuteScriptCompletedHandler_Invoke(errorCode: HRESULT; result_: PWideChar; aExecutionID : integer): HRESULT;
       function CapturePreviewCompletedHandler_Invoke(errorCode: HRESULT): HRESULT;
       function NavigationStartingEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2NavigationStartingEventArgs): HRESULT;
       function NavigationCompletedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2NavigationCompletedEventArgs): HRESULT;
@@ -340,26 +377,26 @@ type
       function AcceleratorKeyPressedEventHandler_Invoke(const sender: ICoreWebView2Controller; const args: ICoreWebView2AcceleratorKeyPressedEventArgs): HRESULT;
       function GotFocusEventHandler_Invoke(const sender: ICoreWebView2Controller; const args: IUnknown): HRESULT;
       function LostFocusEventHandler_Invoke(const sender: ICoreWebView2Controller; const args: IUnknown): HRESULT;
-      function CreateCoreWebView2CompositionControllerCompletedHandler_Invoke(errorCode: HResult; const webView: ICoreWebView2CompositionController): HRESULT;
+      function CreateCoreWebView2CompositionControllerCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2CompositionController): HRESULT;
       function CursorChangedEventHandler_Invoke(const sender: ICoreWebView2CompositionController; const args: IUnknown): HRESULT;
       function BrowserProcessExitedEventHandler_Invoke(const sender: ICoreWebView2Environment; const args: ICoreWebView2BrowserProcessExitedEventArgs): HRESULT;
       function RasterizationScaleChangedEventHandler_Invoke(const sender: ICoreWebView2Controller; const args: IUnknown): HRESULT;
       function WebResourceResponseReceivedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2WebResourceResponseReceivedEventArgs): HRESULT;
       function DOMContentLoadedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2DOMContentLoadedEventArgs): HRESULT;
-      function WebResourceResponseViewGetContentCompletedHandler_Invoke(errorCode: HResult; const Content: IStream; aResourceID : integer): HRESULT;
-      function GetCookiesCompletedHandler_Invoke(aResult : HResult; const aCookieList : ICoreWebView2CookieList): HRESULT;
-      function TrySuspendCompletedHandler_Invoke(errorCode: HResult; isSuccessful: Integer): HRESULT;
+      function WebResourceResponseViewGetContentCompletedHandler_Invoke(errorCode: HResult; const result_: IStream; aResourceID : integer): HRESULT;
+      function GetCookiesCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2CookieList): HRESULT;
+      function TrySuspendCompletedHandler_Invoke(errorCode: HResult; result_: Integer): HRESULT;
       function FrameCreatedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2FrameCreatedEventArgs): HRESULT;
       function DownloadStartingEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2DownloadStartingEventArgs): HRESULT;
       function ClientCertificateRequestedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2ClientCertificateRequestedEventArgs): HRESULT;
-      function PrintToPdfCompletedHandler_Invoke(errorCode: HResult; isSuccessful: Integer): HRESULT;
+      function PrintToPdfCompletedHandler_Invoke(errorCode: HResult; result_: Integer): HRESULT;
       function BytesReceivedChangedEventHandler_Invoke(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer): HRESULT;
       function EstimatedEndTimeChangedEventHandler_Invoke(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer): HRESULT;
       function StateChangedEventHandler_Invoke(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer): HRESULT;
       function FrameNameChangedEventHandler_Invoke(const sender: ICoreWebView2Frame; const args: IUnknown; aFrameID : cardinal): HRESULT;
       function FrameDestroyedEventHandler_Invoke(const sender: ICoreWebView2Frame; const args: IUnknown; aFrameID : cardinal): HRESULT;
-      function CallDevToolsProtocolMethodCompletedHandler_Invoke(errorCode: HResult; returnObjectAsJson: PWideChar; aExecutionID : integer): HRESULT;
-      function AddScriptToExecuteOnDocumentCreatedCompletedHandler_Invoke(errorCode: HResult; id: PWideChar): HRESULT;
+      function CallDevToolsProtocolMethodCompletedHandler_Invoke(errorCode: HResult; result_: PWideChar; aExecutionID : integer): HRESULT;
+      function AddScriptToExecuteOnDocumentCreatedCompletedHandler_Invoke(errorCode: HResult; result_: PWideChar): HRESULT;
       function IsMutedChangedEventHandler_Invoke(const sender: ICoreWebView2; const args: IUnknown): HRESULT;
       function IsDocumentPlayingAudioChangedEventHandler_Invoke(const sender: ICoreWebView2; const args: IUnknown): HRESULT;
       function IsDefaultDownloadDialogOpenChangedEventHandler_Invoke(const sender: ICoreWebView2; const args: IUnknown): HRESULT;
@@ -378,20 +415,46 @@ type
       function ClearServerCertificateErrorActionsCompletedHandler_Invoke(errorCode: HResult): HRESULT;
       function ServerCertificateErrorDetectedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2ServerCertificateErrorDetectedEventArgs): HRESULT;
       function FaviconChangedEventHandler_Invoke(const sender: ICoreWebView2; const args: IUnknown): HRESULT;
-      function GetFaviconCompletedHandler_Invoke(errorCode: HResult; const faviconStream: IStream): HRESULT;
-      function PrintCompletedHandler_Invoke(errorCode: HResult; printStatus: COREWEBVIEW2_PRINT_STATUS): HRESULT;
-      function PrintToPdfStreamCompletedHandler_Invoke(errorCode: HResult; const pdfStream: IStream): HRESULT;
-      function GetNonDefaultPermissionSettingsCompletedHandler_Invoke(errorCode: HResult; const collectionView: ICoreWebView2PermissionSettingCollectionView): HRESULT;
+      function GetFaviconCompletedHandler_Invoke(errorCode: HResult; const result_: IStream): HRESULT;
+      function PrintCompletedHandler_Invoke(errorCode: HResult; result_: COREWEBVIEW2_PRINT_STATUS): HRESULT;
+      function PrintToPdfStreamCompletedHandler_Invoke(errorCode: HResult; const result_: IStream): HRESULT;
+      function GetNonDefaultPermissionSettingsCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2PermissionSettingCollectionView): HRESULT;
       function SetPermissionStateCompletedHandler_Invoke(errorCode: HResult): HRESULT;
       function LaunchingExternalUriSchemeEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2LaunchingExternalUriSchemeEventArgs): HRESULT;
-      function GetProcessExtendedInfosCompletedHandler_Invoke(errorCode: HResult; const value: ICoreWebView2ProcessExtendedInfoCollection): HRESULT;
+      function GetProcessExtendedInfosCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2ProcessExtendedInfoCollection): HRESULT;
       function BrowserExtensionRemoveCompletedHandler_Invoke(errorCode: HResult; const aExtensionID: wvstring): HRESULT;
       function BrowserExtensionEnableCompletedHandler_Invoke(errorCode: HResult; const aExtensionID: wvstring): HRESULT;
-      function ProfileAddBrowserExtensionCompletedHandler_Invoke(errorCode: HResult; const extension: ICoreWebView2BrowserExtension): HRESULT;
-      function ProfileGetBrowserExtensionsCompletedHandler_Invoke(errorCode: HResult; const extensionList: ICoreWebView2BrowserExtensionList): HRESULT;
+      function ProfileAddBrowserExtensionCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2BrowserExtension): HRESULT;
+      function ProfileGetBrowserExtensionsCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2BrowserExtensionList): HRESULT;
       function ProfileDeletedEventHandler_Invoke(const sender: ICoreWebView2Profile; const args: IUnknown): HRESULT;
       function ExecuteScriptWithResultCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2ExecuteScriptResult; aExecutionID : integer): HRESULT;
       function NonClientRegionChangedEventHandler_Invoke(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2NonClientRegionChangedEventArgs): HRESULT;
+      function NotificationReceivedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2NotificationReceivedEventArgs): HRESULT;
+      function NotificationCloseRequestedEventHandler_Invoke(const sender: ICoreWebView2Notification; const args: IUnknown): HRESULT;
+      function SaveAsUIShowingEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2SaveAsUIShowingEventArgs): HRESULT;
+      function ShowSaveAsUICompletedHandler_Invoke(errorCode: HResult; result_: COREWEBVIEW2_SAVE_AS_UI_RESULT): HRESULT;
+      function SaveFileSecurityCheckStartingEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2SaveFileSecurityCheckStartingEventArgs): HRESULT;
+      function ScreenCaptureStartingEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2ScreenCaptureStartingEventArgs): HRESULT;
+      function FrameScreenCaptureStartingEventHandler_Invoke(const sender: ICoreWebView2Frame; const args: ICoreWebView2ScreenCaptureStartingEventArgs; aFrameID: cardinal): HRESULT;
+      function FrameChildFrameCreatedEventHandler_Invoke(const sender: ICoreWebView2Frame; const args: ICoreWebView2FrameCreatedEventArgs; aFrameID: cardinal): HRESULT;
+      function FindActiveMatchIndexChangedEventHandler_Invoke(const sender: ICoreWebView2Find; const args: IUnknown): HRESULT;
+      function FindMatchCountChangedEventHandler_Invoke(const sender: ICoreWebView2Find; const args: IUnknown): HRESULT;
+      function FindStartCompletedHandler_Invoke(errorCode: HResult): HRESULT;
+      function DragStartingEventHandler_Invoke(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2DragStartingEventArgs): HRESULT;
+      function DedicatedWorkerCreatedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs): HRESULT;
+      function DedicatedWorkerDedicatedWorkerCreatedEventHandler_Invoke(const sender: ICoreWebView2DedicatedWorker; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs; aWorkerID: cardinal): HRESULT;
+      function DedicatedWorkerDestroyingEventHandler_Invoke(const sender: ICoreWebView2DedicatedWorker; const args: IUnknown; aWorkerID: cardinal): HRESULT;
+      function DedicatedWorkerWebMessageReceivedEventHandler_Invoke(const sender: ICoreWebView2DedicatedWorker; const args: ICoreWebView2WebMessageReceivedEventArgs; aWorkerID: cardinal): HRESULT;
+      function FrameDedicatedWorkerCreatedEventHandler_Invoke(const sender: ICoreWebView2Frame; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs; aFrameID: cardinal): HRESULT;
+      function ServiceWorkerDestroyingEventHandler_Invoke(const sender: ICoreWebView2ServiceWorker; const args: IUnknown; aWorkerID: cardinal): HRESULT;
+      function ServiceWorkerWebMessageReceivedEventHandler_Invoke(const sender: ICoreWebView2ServiceWorker; const args: ICoreWebView2WebMessageReceivedEventArgs; aWorkerID: cardinal): HRESULT;
+      function ServiceWorkerRegisteredEventHandler_Invoke(const sender: ICoreWebView2ServiceWorkerManager; const args: ICoreWebView2ServiceWorkerRegisteredEventArgs): HRESULT;
+      function GetServiceWorkerRegistrationsCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2ServiceWorkerRegistrationCollectionView): HRESULT;
+      function ServiceWorkerActivatedEventHandler_Invoke(const sender: ICoreWebView2ServiceWorkerRegistration; const args: ICoreWebView2ServiceWorkerActivatedEventArgs): HRESULT;
+      function ServiceWorkerRegistrationUnregisteringEventHandler_Invoke(const sender: ICoreWebView2ServiceWorkerRegistration; const args: IUnknown): HRESULT;
+      function SharedWorkerCreatedEventHandler_Invoke(const sender: ICoreWebView2SharedWorkerManager; const args: ICoreWebView2SharedWorkerCreatedEventArgs): HRESULT;
+      function GetSharedWorkersCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2SharedWorkerCollectionView): HRESULT;
+      function SharedWorkerDestroyingEventHandler_Invoke(const sender: ICoreWebView2SharedWorker; const args: IUnknown; aWorkerID: cardinal): HRESULT;
 
       procedure doOnInitializationError(aErrorCode: HRESULT; const aErrorMessage: wvstring); virtual;
       procedure doOnEnvironmentCompleted; virtual;
@@ -427,20 +490,20 @@ type
       procedure doOnRasterizationScaleChangedEvent(const sender: ICoreWebView2Controller); virtual;
       procedure doOnWebResourceResponseReceivedEvent(const sender: ICoreWebView2; const args: ICoreWebView2WebResourceResponseReceivedEventArgs); virtual;
       procedure doOnDOMContentLoadedEvent(const sender: ICoreWebView2; const args: ICoreWebView2DOMContentLoadedEventArgs); virtual;
-      procedure doOnWebResourceResponseViewGetContentCompletedEvent(errorCode: HResult; const Content: IStream; aResourceID : integer); virtual;
-      procedure doOnGetCookiesCompletedEvent(aResult : HResult; const aCookieList : ICoreWebView2CookieList); virtual;
-      procedure doOnTrySuspendCompletedEvent(errorCode: HResult; isSuccessful: Integer); virtual;
+      procedure doOnWebResourceResponseViewGetContentCompletedEvent(errorCode: HResult; const result_: IStream; aResourceID : integer); virtual;
+      procedure doOnGetCookiesCompletedEvent(errorCode: HResult; const result_: ICoreWebView2CookieList); virtual;
+      procedure doOnTrySuspendCompletedEvent(errorCode: HResult; result_: Integer); virtual;
       procedure doOnFrameCreatedEvent(const sender: ICoreWebView2; const args: ICoreWebView2FrameCreatedEventArgs); virtual;
       procedure doOnDownloadStartingEvent(const sender: ICoreWebView2; const args: ICoreWebView2DownloadStartingEventArgs); virtual;
       procedure doOnClientCertificateRequestedEvent(const sender: ICoreWebView2; const args: ICoreWebView2ClientCertificateRequestedEventArgs); virtual;
-      procedure doOnPrintToPdfCompletedEvent(errorCode: HResult; isSuccessful: Integer); virtual;
+      procedure doOnPrintToPdfCompletedEvent(errorCode: HResult; result_: Integer); virtual;
       procedure doOnBytesReceivedChangedEventEvent(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer); virtual;
       procedure doOnEstimatedEndTimeChangedEvent(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer); virtual;
       procedure doOnStateChangedEvent(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer); virtual;
       procedure doOnFrameNameChangedEvent(const sender: ICoreWebView2Frame; const args: IUnknown; aFrameID : cardinal); virtual;
       procedure doOnFrameDestroyedEvent(const sender: ICoreWebView2Frame; const args: IUnknown; aFrameID : cardinal); virtual;
-      procedure doOnCallDevToolsProtocolMethodCompletedEvent(aErrorCode: HRESULT; const aReturnObjectAsJson: wvstring; aExecutionID : integer); virtual;
-      procedure doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(aErrorCode: HRESULT; const aID : wvstring); virtual;
+      procedure doOnCallDevToolsProtocolMethodCompletedEvent(aErrorCode: HRESULT; const aResult: wvstring; aExecutionID : integer); virtual;
+      procedure doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(aErrorCode: HRESULT; const aResult : wvstring); virtual;
       procedure doOnRetrieveHTMLCompleted(aErrorCode: HRESULT; const aResultObjectAsJson: wvstring); virtual;
       procedure doOnRetrieveTextCompleted(aErrorCode: HRESULT; const aResultObjectAsJson: wvstring); virtual;
       procedure doOnRetrieveMHTMLCompleted(aErrorCode: HRESULT; const aReturnObjectAsJson: wvstring); virtual;
@@ -468,21 +531,47 @@ type
       procedure doOnServerCertificateErrorActionsCompletedEvent(aErrorCode: HRESULT); virtual;
       procedure doOnServerCertificateErrorDetectedEvent(const sender: ICoreWebView2; const args: ICoreWebView2ServerCertificateErrorDetectedEventArgs); virtual;
       procedure doOnFaviconChangedEvent(const sender: ICoreWebView2; const args: IUnknown); virtual;
-      procedure doOnGetFaviconCompletedEvent(errorCode: HResult; const faviconStream: IStream); virtual;
-      procedure doOnPrintCompletedEvent(errorCode: HResult; printStatus: COREWEBVIEW2_PRINT_STATUS); virtual;
-      procedure doOnPrintToPdfStreamCompletedEvent(errorCode: HResult; const pdfStream: IStream); virtual;
+      procedure doOnGetFaviconCompletedEvent(errorCode: HResult; const result_: IStream); virtual;
+      procedure doOnPrintCompletedEvent(errorCode: HResult; result_: COREWEBVIEW2_PRINT_STATUS); virtual;
+      procedure doOnPrintToPdfStreamCompletedEvent(errorCode: HResult; const result_: IStream); virtual;
       procedure doOnGetCustomSchemes(var aSchemeRegistrations : TWVCustomSchemeRegistrationArray); virtual;
-      procedure doOnGetNonDefaultPermissionSettingsCompleted(errorCode: HResult; const collectionView: ICoreWebView2PermissionSettingCollectionView); virtual;
+      procedure doOnGetNonDefaultPermissionSettingsCompleted(errorCode: HResult; const result_: ICoreWebView2PermissionSettingCollectionView); virtual;
       procedure doOnSetPermissionStateCompleted(errorCode: HResult); virtual;
       procedure doOnLaunchingExternalUriSchemeEvent(const sender: ICoreWebView2; const args: ICoreWebView2LaunchingExternalUriSchemeEventArgs); virtual;
-      procedure doOnGetProcessExtendedInfosCompletedEvent(errorCode: HResult; const value: ICoreWebView2ProcessExtendedInfoCollection); virtual;
+      procedure doOnGetProcessExtendedInfosCompletedEvent(errorCode: HResult; const result_: ICoreWebView2ProcessExtendedInfoCollection); virtual;
       procedure doOnBrowserExtensionRemoveCompletedEvent(errorCode: HResult; const aExtensionID: wvstring); virtual;
       procedure doOnBrowserExtensionEnableCompletedEvent(errorCode: HResult; const aExtensionID: wvstring); virtual;
-      procedure doOnProfileAddBrowserExtensionCompletedEvent(errorCode: HResult; const extension: ICoreWebView2BrowserExtension); virtual;
-      procedure doOnProfileGetBrowserExtensionsCompletedEvent(errorCode: HResult; const extensionList: ICoreWebView2BrowserExtensionList); virtual;
+      procedure doOnProfileAddBrowserExtensionCompletedEvent(errorCode: HResult; const result_: ICoreWebView2BrowserExtension); virtual;
+      procedure doOnProfileGetBrowserExtensionsCompletedEvent(errorCode: HResult; const result_: ICoreWebView2BrowserExtensionList); virtual;
       procedure doOnProfileDeletedEvent(const sender: ICoreWebView2Profile; const args: IUnknown); virtual;
       procedure doOnExecuteScriptWithResultCompletedEvent(errorCode: HResult; const result_: ICoreWebView2ExecuteScriptResult; aExecutionID : integer); virtual;
       procedure doOnNonClientRegionChangedEvent(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2NonClientRegionChangedEventArgs); virtual;
+      procedure doOnNotificationReceivedEvent(const sender: ICoreWebView2; const args: ICoreWebView2NotificationReceivedEventArgs); virtual;
+      procedure doOnNotificationCloseRequestedEvent(const sender: ICoreWebView2Notification; const args: IUnknown); virtual;
+      procedure doOnSaveAsUIShowingEvent(const sender: ICoreWebView2; const args: ICoreWebView2SaveAsUIShowingEventArgs); virtual;
+      procedure doOnShowSaveAsUICompletedEvent(errorCode: HResult; result_: COREWEBVIEW2_SAVE_AS_UI_RESULT); virtual;
+      procedure doOnSaveFileSecurityCheckStartingEvent(const sender: ICoreWebView2; const args: ICoreWebView2SaveFileSecurityCheckStartingEventArgs); virtual;
+      procedure doOnScreenCaptureStartingEvent(const sender: ICoreWebView2; const args: ICoreWebView2ScreenCaptureStartingEventArgs); virtual;
+      procedure doOnFrameScreenCaptureStartingEvent(const sender: ICoreWebView2Frame; const args: ICoreWebView2ScreenCaptureStartingEventArgs; aFrameID: cardinal); virtual;
+      procedure doOnFrameChildFrameCreatedEvent(const sender: ICoreWebView2Frame; const args: ICoreWebView2FrameCreatedEventArgs; aFrameID: cardinal); virtual;
+      procedure doOnFindActiveMatchIndexChangedEvent(const sender: ICoreWebView2Find; const args: IUnknown); virtual;
+      procedure doOnFindMatchCountChangedEvent(const sender: ICoreWebView2Find; const args: IUnknown); virtual;
+      procedure doOnFindStartCompletedEvent(errorCode: HResult); virtual;
+      procedure doOnDragStartingEvent(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2DragStartingEventArgs); virtual;
+      procedure doOnDedicatedWorkerCreatedEvent(const sender: ICoreWebView2; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs); virtual;
+      procedure doOnDedicatedWorkerCreatedEvent2(const sender: ICoreWebView2DedicatedWorker; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs; aWorkerID: cardinal); virtual;
+      procedure doOnDedicatedWorkerDestroyingEvent(const sender: ICoreWebView2DedicatedWorker; const args: IUnknown; aWorkerID: cardinal); virtual;
+      procedure doOnDedicatedWorkerWebMessageReceivedEvent(const sender: ICoreWebView2DedicatedWorker; const args: ICoreWebView2WebMessageReceivedEventArgs; aWorkerID: cardinal); virtual;
+      procedure doOnFrameDedicatedWorkerCreatedEvent(const sender: ICoreWebView2Frame; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs; aFrameID: cardinal); virtual;
+      procedure doOnServiceWorkerDestroyingEvent(const sender: ICoreWebView2ServiceWorker; const args: IUnknown; aWorkerID: cardinal); virtual;
+      procedure doOnServiceWorkerWebMessageReceivedEvent(const sender: ICoreWebView2ServiceWorker; const args: ICoreWebView2WebMessageReceivedEventArgs; aWorkerID: cardinal); virtual;
+      procedure doOnServiceWorkerRegisteredEvent(const sender: ICoreWebView2ServiceWorkerManager; const args: ICoreWebView2ServiceWorkerRegisteredEventArgs); virtual;
+      procedure doOnGetServiceWorkerRegistrationsCompletedEvent(errorCode: HResult; const result_: ICoreWebView2ServiceWorkerRegistrationCollectionView); virtual;
+      procedure doOnServiceWorkerActivatedEvent(const sender: ICoreWebView2ServiceWorkerRegistration; const args: ICoreWebView2ServiceWorkerActivatedEventArgs); virtual;
+      procedure doOnServiceWorkerRegistrationUnregisteringEvent(const sender: ICoreWebView2ServiceWorkerRegistration; const args: IUnknown); virtual;
+      procedure doOnSharedWorkerCreatedEvent(const sender: ICoreWebView2SharedWorkerManager; const args: ICoreWebView2SharedWorkerCreatedEventArgs); virtual;
+      procedure doOnGetSharedWorkersCompletedEvent(errorCode: HResult; const result_: ICoreWebView2SharedWorkerCollectionView); virtual;
+      procedure doOnSharedWorkerDestroyingEvent(const sender: ICoreWebView2SharedWorker; const args: IUnknown; aWorkerID: cardinal); virtual;
 
     public
       constructor Create(AOwner: TComponent); override;
@@ -707,7 +796,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_21#executescriptwithresult">See the icorewebview2_21 article.</see></para>
       /// </remarks>
-      function ExecuteScriptWithResult(const aJavaScript: wvstring; aExecutionID : integer = 0): boolean;
+      function    ExecuteScriptWithResult(const aJavaScript: wvstring; aExecutionID : integer = 0): boolean;
       /// <summary>
       /// <para>Run JavaScript code from the aJavaScript parameter in the current
       /// top-level document rendered in the WebView.</para>
@@ -923,7 +1012,8 @@ type
       /// <summary>
       /// Retrieve the text contents. The TWVBrowserBase.OnRetrieveTextCompleted event is triggered asynchronously with the text contents.
       /// </summary>
-      function    RetrieveText : boolean;
+      /// <param name="aVisibleTextOnly">Exclude text that is hidden with CSS or rendered as invisible due to its parent's visibility settings.</param>
+      function    RetrieveText(aVisibleTextOnly: boolean = False) : boolean;
       /// <summary>
       /// Retrieve the web page contents in MHTML format. The TWVBrowserBase.OnRetrieveMHTMLCompleted event is triggered asynchronously with the MHTML contents.
       /// </summary>
@@ -1020,6 +1110,12 @@ type
       /// </remarks>
       function    PostWebMessageAsString(const aWebMessageAsString : wvstring) : boolean;
       /// <summary>
+      /// <para>Warning: This method is deprecated and does not behave as expected for
+      /// iframes. It will cause the WebResourceRequested event to fire only for the
+      /// main frame and its same-origin iframes. Please use
+      /// `AddWebResourceRequestedFilterWithRequestSourceKinds`
+      /// instead, which will let the event to fire for all iframes on the
+      /// document.</para>
       /// <para>Adds a URI and resource context filter for the `WebResourceRequested`
       /// event.  A web resource request with a resource context that matches this
       /// filter's resource context and a URI that matches this filter's URI
@@ -1058,13 +1154,14 @@ type
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2#addwebresourcerequestedfilter">See the ICoreWebView2 article.</see></para>
       /// </remarks>
       function    AddWebResourceRequestedFilter(const aURI: wvstring; aResourceContext: TWVWebResourceContext) : boolean;
-      /// <summary>
-      /// Removes a matching WebResource filter that was previously added for the
+      /// <para>Warning: This method and `AddWebResourceRequestedFilter` are deprecated.
+      /// Please use `AddWebResourceRequestedFilterWithRequestSourceKinds` and
+      /// `RemoveWebResourceRequestedFilterWithRequestSourceKinds` instead.</para>
+      /// <para>Removes a matching WebResource filter that was previously added for the
       /// `WebResourceRequested` event.  If the same filter was added multiple
       /// times, then it must be removed as many times as it was added for the
-      /// removal to be effective.  Returns false for a filter that was
-      /// never added.
-      /// </summary>
+      /// removal to be effective.  Returns `E_INVALIDARG` for a filter that was
+      /// never added.</para>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2#removewebresourcerequestedfilter">See the ICoreWebView2 article.</see></para>
       /// </remarks>
@@ -1097,14 +1194,18 @@ type
       /// `requestSourceKinds` equals to zero. For more information about request
       /// source kinds, navigate to
       /// [COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS](/microsoft-edge/webview2/reference/win32/icorewebview2#corewebview2_web_resource_request_source_kinds).</para>
-      /// <para>Because service workers and shared workers run separately from any one
-      /// HTML document their WebResourceRequested will be raised for all
-      /// CoreWebView2s that have appropriate filters added in the corresponding
-      /// CoreWebView2Environment. You should only add a WebResourceRequested filter
-      /// for COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS_SERVICE_WORKER or
+      /// <para>Because service workers and shared workers run separately from
+      /// any one HTML document their WebResourceRequested may be raised for any
+      /// CoreWebView2 that has appropriate filters added in the same
+      /// CoreWebView2Profile. WebResourceRequested is not raised for requests
+      /// from service workers or shared workers that belong to a different
+      /// CoreWebView2Profile, including an InPrivate profile, even if both
+      /// profiles share the same CoreWebView2Environment. You should only add
+      /// a WebResourceRequested filter for
+      /// COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS_SERVICE_WORKER or
       /// COREWEBVIEW2_WEB_RESOURCE_REQUEST_SOURCE_KINDS_SHARED_WORKER on
-      /// one CoreWebView2 to avoid handling the same WebResourceRequested
-      /// event multiple times.</para>
+      /// one CoreWebView2 per CoreWebView2Profile to avoid handling the same
+      /// WebResourceRequested event multiple times.</para>
       /// <code>
       /// | URI Filter String | Request URI | Match | Notes |
       /// | ---- | ---- | ---- | ---- |
@@ -1124,7 +1225,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_22#addwebresourcerequestedfilterwithrequestsourcekinds">See the ICoreWebView2_22 article.</see></para>
       /// </remarks>
-      function AddWebResourceRequestedFilterWithRequestSourceKinds(const uri: wvstring;
+      function    AddWebResourceRequestedFilterWithRequestSourceKinds(const uri: wvstring;
                                                                    ResourceContext: TWVWebResourceContext;
                                                                    requestSourceKinds: TWVWebResourceRequestSourceKind): boolean;
       /// <summary>
@@ -1139,19 +1240,138 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_22#removewebresourcerequestedfilterwithrequestsourcekinds">See the ICoreWebView2_22 article.</see></para>
       /// </remarks>
-      function RemoveWebResourceRequestedFilterWithRequestSourceKinds(const uri: wvstring;
-                                                                      ResourceContext: TWVWebResourceContext;
-                                                                      requestSourceKinds: TWVWebResourceRequestSourceKind): boolean;
+      function    RemoveWebResourceRequestedFilterWithRequestSourceKinds(const uri: wvstring;
+                                                                         ResourceContext: TWVWebResourceContext;
+                                                                         requestSourceKinds: TWVWebResourceRequestSourceKind): boolean;
       /// <summary>
-      /// Add the provided host object to script running in the WebView with the
+      /// <para>Same as `PostWebMessageAsJson`, but also has support for posting DOM objects
+      /// to page content. The `additionalObjects` property in the DOM MessageEvent
+      /// fired on the page content is an array-like list of DOM objects that can
+      /// be posted to the web content. Currently these can be the following
+      /// types of objects:</para>
+      /// <code>
+      /// | Win32             | DOM type    |
+      /// |-------------------|-------------|
+      /// | ICoreWebView2FileSystemHandle | [FileSystemHandle](https://developer.mozilla.org/docs/Web/API/FileSystemHandle) |
+      /// | nullptr           | null        |
+      /// </code>
+      /// <para>The objects are posted to the web content, following the
+      /// [structured-clone](https://developer.mozilla.org/docs/Web/API/Web_Workers_API/Structured_clone_algorithm)
+      /// semantics, meaning only objects that can be cloned can be posted.</para>
+      /// <para>They will also behave as if they had been created by the web content they are
+      /// posted to. For example, if a FileSystemFileHandle is posted to a web content
+      /// it can only be re-transferred via postMessage to other web content
+      /// [with the same origin](https://fs.spec.whatwg.org/#filesystemhandle).</para>
+      /// <para>Warning: An app needs to be mindful when using this API to post DOM objects
+      /// as this API provides the web content with unusual access to sensitive Web
+      /// Platform features such as filesystem access! Similar to PostWebMessageAsJson
+      /// the app should check the `Source` property of WebView2 right before posting the message
+      /// to ensure the message and objects will only be sent to the target web content
+      /// that it expects to receive the DOM objects. Additionally, the order
+      /// of messages that are posted between `PostWebMessageAsJson` and `PostWebMessageAsJsonWithAdditionalObjects`
+      /// may not be preserved.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_23#postwebmessageasjsonwithadditionalobjects">See the ICoreWebView2_23 article.</see></para>
+      /// </remarks>
+      function    PostWebMessageAsJsonWithAdditionalObjects(const webMessageAsJson: wvstring;
+                                                            const additionalObjects: ICoreWebView2ObjectCollectionView): boolean;
+      /// <summary>
+      /// <para>Add the provided host object to script running in the WebView with the
       /// specified name.  Host objects are exposed as host object proxies using
       /// `window.chrome.webview.hostObjects.{name}`.  Host object proxies are
       /// promises and resolves to an object representing the host object.  The
-      /// promise is rejected if the app has not added an object with the name.
-      /// When JavaScript code access a property or method of the object, a promise
+      /// promise is rejected if the app has not added an object with the name.</para>
+      /// <para>When JavaScript code access a property or method of the object, a promise
       ///  is return, which resolves to the value returned from the host for the
       /// property or method, or rejected in case of error, for example, no
-      /// property or method on the object or parameters are not valid.
+      /// property or method on the object or parameters are not valid.</para>
+      ///
+      /// <para>NOTE: While simple types, `IDispatch` and array are supported, and
+      /// `IUnknown` objects that also implement `IDispatch` are treated as `IDispatch`,
+      /// generic `IUnknown`, `VT_DECIMAL`, or `VT_RECORD` variant is not supported.
+      /// Remote JavaScript objects like callback functions are represented as an
+      /// `VT_DISPATCH` `VARIANT` with the object implementing `IDispatch`.  The
+      /// JavaScript callback method may be invoked using `DISPID_VALUE` for the
+      /// `DISPID`.  Such callback method invocations will return immediately and will
+      /// not wait for the JavaScript function to run and so will not provide the return
+      /// value of the JavaScript function.</para>
+      /// <para>Nested arrays are supported up to a depth of 3.  Arrays of by
+      /// reference types are not supported. `VT_EMPTY` and `VT_NULL` are mapped
+      /// into JavaScript as `null`.  In JavaScript, `null` and undefined are
+      /// mapped to `VT_EMPTY`.</para>
+      ///
+      /// <para>Additionally, all host objects are exposed as
+      /// `window.chrome.webview.hostObjects.sync.{name}`.  Here the host objects
+      /// are exposed as synchronous host object proxies. These are not promises
+      /// and function runtimes or property access synchronously block running
+      /// script waiting to communicate cross process for the host code to run.
+      /// Accordingly the result may have reliability issues and it is recommended
+      /// that you use the promise-based asynchronous
+      /// `window.chrome.webview.hostObjects.{name}` API.</para>
+      ///
+      /// <para>Synchronous host object proxies and asynchronous host object proxies may
+      /// both use a proxy to the same host object.  Remote changes made by one
+      /// proxy propagates to any other proxy of that same host object whether
+      /// the other proxies and synchronous or asynchronous.</para>
+      ///
+      /// <para>While JavaScript is blocked on a synchronous run to native code, that
+      /// native code is unable to run back to JavaScript.  Attempts to do so fail
+      ///  with `HRESULT_FROM_WIN32(ERROR_POSSIBLE_DEADLOCK)`.</para>
+      ///
+      /// <para>Host object proxies are JavaScript Proxy objects that intercept all
+      /// property get, property set, and method invocations. Properties or methods
+      ///  that are a part of the Function or Object prototype are run locally.
+      /// Additionally any property or method in the
+      /// `chrome.webview.hostObjects.options.forceLocalProperties`
+      /// array are also run locally.  This defaults to including optional methods
+      /// that have meaning in JavaScript like `toJSON` and `Symbol.toPrimitive`.
+      /// Add more to the array as required.</para>
+      ///
+      /// <para>The `chrome.webview.hostObjects.cleanupSome` method performs a best
+      /// effort garbage collection on host object proxies.</para>
+      ///
+      /// <para>The `chrome.webview.hostObjects.options` object provides the ability to
+      /// change some functionality of host objects.</para>
+      /// <code>
+      /// Options property | Details
+      /// ---|---
+      /// `forceLocalProperties` | This is an array of host object property names that will be run locally, instead of being called on the native host object. This defaults to `then`, `toJSON`, `Symbol.toString`, and `Symbol.toPrimitive`. You can add other properties to specify that they should be run locally on the javascript host object proxy.
+      /// `log` | This is a callback that will be called with debug information. For example, you can set this to `console.log.bind(console)` to have it print debug information to the console to help when troubleshooting host object usage. By default this is null.
+      /// `shouldSerializeDates` | By default this is false, and javascript Date objects will be sent to host objects as a string using `JSON.stringify`. You can set this property to true to have Date objects properly serialize as a `VT_DATE` when sending to the native host object, and have `VT_DATE` properties and return values create a javascript Date object.
+      /// `defaultSyncProxy` | When calling a method on a synchronous proxy, the result should also be a synchronous proxy. But in some cases, the sync/async context is lost (for example, when providing to native code a reference to a function, and then calling that function in native code). In these cases, the proxy will be asynchronous, unless this property is set.
+      /// `forceAsyncMethodMatches ` | This is an array of regular expressions. When calling a method on a synchronous proxy, the method call will be performed asynchronously if the method name matches a string or regular expression in this array. Setting this value to `Async` will make any method that ends with Async be an asynchronous method call. If an async method doesn't match here and isn't forced to be asynchronous, the method will be invoked synchronously, blocking execution of the calling JavaScript and then returning the resolution of the promise, rather than returning a promise.
+      /// `ignoreMemberNotFoundError` | By default, an exception is thrown when attempting to get the value of a proxy property that doesn't exist on the corresponding native class. Setting this property to `true` switches the behavior to match Chakra WinRT projection (and general JavaScript) behavior of returning `undefined` with no error.
+      /// `shouldPassTypedArraysAsArrays` | By default, typed arrays are passed to the host as `IDispatch`. To instead pass typed arrays to the host as `array`, set this to `true`.
+      /// </code>
+      /// <para>Host object proxies additionally have the following methods which run
+      /// locally.</para>
+      /// <code>
+      /// Method name | Details
+      /// ---|---
+      ///`applyHostFunction`, `getHostProperty`, `setHostProperty` | Perform a method invocation, property get, or property set on the host object. Use the methods to explicitly force a method or property to run remotely if a conflicting local method or property exists.  For instance, `proxy.toString()` runs the local `toString` method on the proxy object. But proxy.applyHostFunction('toString') runs `toString` on the host proxied object instead.
+      ///`getLocalProperty`, `setLocalProperty` | Perform property get, or property set locally.  Use the methods to force getting or setting a property on the host object proxy rather than on the host object it represents. For instance, `proxy.unknownProperty` gets the property named `unknownProperty` from the host proxied object.  But proxy.getLocalProperty('unknownProperty') gets the value of the property `unknownProperty` on the proxy object.
+      ///`sync` | Asynchronous host object proxies expose a sync method which returns a promise for a synchronous host object proxy for the same host object.  For example, `chrome.webview.hostObjects.sample.methodCall()` returns an asynchronous host object proxy.  Use the `sync` method to obtain a synchronous host object proxy instead: `const syncProxy = await chrome.webview.hostObjects.sample.methodCall().sync()`.
+      ///`async` | Synchronous host object proxies expose an async method which blocks and returns an asynchronous host object proxy for the same host object.  For example, `chrome.webview.hostObjects.sync.sample.methodCall()` returns a synchronous host object proxy.  Running the `async` method on this blocks and then returns an asynchronous host object proxy for the same host object: `const asyncProxy = chrome.webview.hostObjects.sync.sample.methodCall().async()`.
+      ///`then` | Asynchronous host object proxies have a `then` method.  Allows proxies to be awaitable.  `then` returns a promise that resolves with a representation of the host object.  If the proxy represents a JavaScript literal, a copy of that is returned locally.  If the proxy represents a function, a non-awaitable proxy is returned.  If the proxy represents a JavaScript object with a mix of literal properties and function properties, the a copy of the object is returned with some properties as host object proxies.
+      /// </code>
+      /// <para>All other property and method invocations (other than the above Remote
+      /// object proxy methods, `forceLocalProperties` list, and properties on
+      /// Function and Object prototypes) are run remotely.  Asynchronous host
+      /// object proxies return a promise representing asynchronous completion of
+      /// remotely invoking the method, or getting the property.  The promise
+      /// resolves after the remote operations complete and the promises resolve to
+      ///  the resulting value of the operation.  Synchronous host object proxies
+      /// work similarly, but block running JavaScript and wait for the remote
+      /// operation to complete.</para>
+      ///
+      /// <para>Setting a property on an asynchronous host object proxy works slightly
+      /// differently.  The set returns immediately and the return value is the
+      /// value that is set.  This is a requirement of the JavaScript Proxy object.
+      /// If you need to asynchronously wait for the property set to complete, use
+      /// the `setHostProperty` method which returns a promise as described above.
+      /// Synchronous object property set property synchronously blocks until the
+      /// property is set.</para>
       /// </summary>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2#addhostobjecttoscript">See the ICoreWebView2 article.</see></para>
@@ -1557,7 +1777,8 @@ type
       /// Clears the storage for origin. This function is asynchronous and it triggers the TWVBrowserBase.OnClearDataForOriginCompleted event when it finishes executing.
       /// </summary>
       /// <remarks>
-      /// <para><see href="https://chromedevtools.github.io/devtools-protocol/tot/Storage/#method-clearDataForOrigin">See the Chrome DevTools Protocol page about the Storage.clearDataForOrigin method.</see></para>
+      /// <para><see href="https://chromedevtools.github.io/devtools-protocol/tot/Storage/#method-clearDataForOrigin">See the documentation for the Storage.clearDataForOrigin DevTools method.</see></para>
+      /// <para><see href="https://chromedevtools.github.io/devtools-protocol/tot/Storage/#type-StorageType">See the documentation for the Storage.StorageType type.</see></para>
       /// </remarks>
       function    ClearDataForOrigin(const aOrigin : wvstring; aStorageTypes : TWVClearDataStorageTypes = cdstAll) : boolean;
       /// <summary>
@@ -1650,6 +1871,70 @@ type
       /// <para>This function triggers the TWVBrowserBase.OnGetProcessExtendedInfosCompleted event.</para>
       /// </remarks>
       function    GetProcessExtendedInfos : boolean;
+      /// <summary>
+      /// <para>Programmatically trigger a Save As action for the currently loaded document.</para>
+      /// <para>Opens a system modal dialog by default. If the `SuppressDefaultDialog` property
+      /// is `TRUE`, the system dialog is not opened.</para>
+      /// <para>This method returns `COREWEBVIEW2_SAVE_AS_UI_RESULT`. See
+      /// `COREWEBVIEW2_SAVE_AS_UI_RESULT` for details.</para>
+      /// </summary>
+      /// <returns>True if successfull.</return>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_25#showsaveasui">See the ICoreWebView2_25 article.</see></para>
+      /// <para>This function triggers the TWVBrowserBase.OnSaveAsUIShowing and TWVBrowserBase.OnShowSaveAsUICompleted events.</para>
+      /// </remarks>
+      function    ShowSaveAsUI : boolean;
+      /// <summary>
+      /// Initiates a find using the specified find options asynchronously.
+      /// Displays the Find bar and starts the find session. If a find session was already ongoing, it will be stopped and replaced with this new instance.
+      /// If called with an empty string, the Find bar is displayed but no finding occurs. Changing the FindOptions object after initiation won't affect the ongoing find session.
+      /// To change the ongoing find session, Start must be called again with a new or modified FindOptions object.
+      /// Start supports HTML and TXT document queries. In general, this API is designed for text-based find sessions.
+      /// If you start a find session programmatically on another file format that doesn't have text fields, the find session will try to execute but will fail to find any matches. (It will silently fail)
+      /// Note: The asynchronous action completes when the UI has been displayed with the find term in the UI bar, and the matches have populated on the counter on the find bar.
+      /// There may be a slight latency between the UI display and the matches populating in the counter.
+      /// The MatchCountChanged and ActiveMatchIndexChanged events are only raised after Start has completed; otherwise, they will have their default values (-1 for active match index and 0 for match count).
+      /// To start a new find session (beginning the search from the first match), call `Stop` before invoking `Start`.
+      /// If `Start` is called consecutively with the same options and without calling `Stop`, the find session
+      /// will continue from the current position in the existing session.
+      /// Calling `Start` without altering its parameters will behave either as `FindNext` or `FindPrevious`, depending on the most recent search action performed.
+      /// Start will default to forward if neither have been called.
+      /// However, calling Start again during an ongoing find session does not resume from the point
+      /// of the current active match. For example, given the text "1 1 A 1 1" and initiating a find session for "A",
+      /// then starting another find session for "1", it will start searching from the beginning of the document,
+      /// regardless of the previous active match. This behavior indicates that changing the find query initiates a
+      /// completely new find session, rather than continuing from the previous match index.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#start">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      function    FindStart(const aFindTerm : wvstring) : boolean;
+      /// <summary>
+      /// Navigates to the next match in the document.
+      /// If there are no matches to find, FindNext will wrap around to the first match's index.
+      /// If called when there is no find session active, FindNext will silently fail.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#findnext">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      function    FindNext : boolean;
+      /// <summary>
+      /// Navigates to the previous match in the document.
+      /// If there are no matches to find, FindPrevious will wrap around to the last match's index.
+      /// If called when there is no find session active, FindPrevious will silently fail.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#findprevious">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      function    FindPrevious : boolean;
+      /// <summary>
+      /// Stops the current 'Find' session and hides the Find bar.
+      /// If called with no Find session active, it will silently do nothing.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#stopt">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      function    FindStop : boolean;
 
       // Custom properties
       property Initialized                                     : boolean                                               read GetInitialized;
@@ -2184,6 +2469,7 @@ type
       /// must be done through API call.</para>
       /// </summary>
       /// <remarks>
+      /// <para>The only supported alpha values are 0 (transparent) and 255 (opaque). Remember to set the alpha channel manually when using predefined TColor values.</para>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controller2#get_defaultbackgroundcolor">See the ICoreWebView2Controller2 article.</see></para>
       /// </remarks>
       property DefaultBackgroundColor                          : TColor                                                read GetDefaultBackgroundColor                        write SetDefaultBackgroundColor;
@@ -2357,8 +2643,8 @@ type
       /// Sec-CH-UA-* and script values from navigator.userAgentData. Current
       /// implementation behavior is subject to change.</para>
       /// <para>The User Agent set will also be effective on service workers
-      /// and shared workers associated with the WebView.
-      /// If there are multiple WebViews associated with the same service worker or
+      /// and shared workers associated with the WebView. If there are
+      /// multiple WebViews associated with the same service worker or
       /// shared worker, the last User Agent set will be used.</para>
       /// </summary>
       /// <remarks>
@@ -2626,6 +2912,18 @@ type
       /// </remarks>
       property ScriptLocale                                    : wvstring                                              read FScriptLocale                                    write FScriptLocale;
       /// <summary>
+      /// <para>`AllowHostInputProcessing` property is to enable/disable input passing through
+      /// the app before being delivered to the WebView2. This property is only applicable
+      /// to controllers created with `CoreWebView2Environment.CreateCoreWebView2ControllerAsync` and not
+      /// composition controllers created with `CoreWebView2Environment.CreateCoreWebView2CompositionControllerAsync`.
+      /// By default the value is `FALSE`.</para>
+      /// <para>Setting this property has no effect when using visual hosting.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controlleroptions4#put_allowhostinputprocessing">See the ICoreWebView2Controller4 article.</see></para>
+      /// </remarks>
+      property AllowHostInputProcessing                        : boolean                                               read FAllowHostInputProcessing                        write FAllowHostInputProcessing;
+      /// <summary>
       /// Full path of the profile directory.
       /// </summary>
       /// <remarks>
@@ -2739,6 +3037,48 @@ type
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_20#get_frameid">See the ICoreWebView2_20 article.</see></para>
       /// </remarks>
       property FrameId                                        : cardinal                                               read GetFrameID;
+      /// <summary>
+      /// Options used to configure a find session.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2findoptions">See the ICoreWebView2FindOptions article.</see></para>
+      /// </remarks>
+      property FindOptions                                    : TCoreWebView2FindOptions                               read FCoreWebView2FindOptions;
+      /// <summary>
+      /// FindSession allows for finding text, navigation between matches, and customization of the find UI.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      property FindSession                                    : TCoreWebView2Find                                      read FCoreWebView2Find;
+      /// <summary>
+      /// Enables or disables webview2 specific Service Worker JS APIs in the
+      /// WebView2s associated with this Profile. When set to `TRUE`, chrome and
+      /// webview objects are available in Service Workers. chrome.webview exposes
+      /// APIs to interact with the WebView from Service Workers. The default value
+      /// is `FALSE`. This setting applies to all newly installed Service Workers
+      /// within the profile and is not persisted across WebView2 sessions.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#set_arewebviewscriptapisenabledforserviceworkers">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property AreWebViewScriptApisEnabledForServiceWorkers   : boolean                                                read GetAreWebViewScriptApisEnabledForServiceWorkers  write SetAreWebViewScriptApisEnabledForServiceWorkers;
+      /// <summary>
+      /// Get the service worker manager to monitor service worker registrations and
+      /// interact with the service workers associated with the current profile.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#get_serviceworkermanager">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property ServiceWorkerManager                           : ICoreWebView2ServiceWorkerManager                      read GetServiceWorkerManager;
+      /// <summary>
+      /// Get the shared worker manager to monitor shared worker creations and interact
+      /// with the shared workers associated with the current profile.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#get_sharedworkermanager">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property SharedWorkerManager                            : ICoreWebView2SharedWorkerManager                       read GetSharedWorkerManager;
 
       /// <summary>
       /// The OnBrowserProcessExited event is triggered when the collection of WebView2
@@ -2927,9 +3267,9 @@ type
       property OnWebMessageReceived                            : TOnWebMessageReceivedEvent                            read FOnWebMessageReceived                            write FOnWebMessageReceived;
       /// <summary>
       /// <para>`OnWebResourceRequested` runs when the WebView is performing a URL request
-      /// to a matching URL and resource context filter that was added with
-      /// `AddWebResourceRequestedFilter`.  At least one filter must be added for
-      /// the event to run.</para>
+      /// to a matching URL and resource context and source kind filter that was
+      /// added with `AddWebResourceRequestedFilterWithRequestSourceKinds`.
+      /// At least one filter must be added for the event to run.</para>
       /// <para>The web resource requested may be blocked until the event handler returns
       /// if a deferral is not taken on the event args.  If a deferral is taken,
       /// then the web resource requested is blocked until the deferral is
@@ -3308,8 +3648,13 @@ type
       /// of the `PermissionRequestedEventArgs` is set to TRUE within the
       /// `CoreWebView2Frame` event handler, then the event will not be
       /// raised on the `CoreWebView2`, and it's event handlers will not be invoked.</para>
-      /// <para>In the case of nested iframes, the 'OnFramePermissionRequested' event will
-      /// be raised from the top level iframe.</para>
+      /// <para>In the case of nested iframes, if the `PermissionRequested` event is handled
+      /// in the current nested iframe (i.e., the Handled property of the
+      /// `PermissionRequestedEventArgs` is set to TRUE), the event will not be raised
+      /// on the parent `CoreWebView2Frame`. However, if the `PermissionRequested` event is
+      /// not handled in that nested iframe, the event will be raised from its nearest
+      /// tracked parent `CoreWebView2Frame`. It will iterate through the parent frame
+      /// chain up to the main frame until a parent frame handles the request.</para>
       /// <para>If a deferral is not taken on the event args, the subsequent scripts are
       /// blocked until the event handler returns.  If a deferral is taken, the
       /// scripts are blocked until the deferral is completed.</para>
@@ -3521,39 +3866,39 @@ type
       /// <summary>
       /// <para>The `OnLaunchingExternalUriScheme` event is raised when a navigation request is made to
       /// a URI scheme that is registered with the OS.</para>
+      ///
       /// <para>The `OnLaunchingExternalUriScheme` event handler may suppress the default dialog
       /// or replace the default dialog with a custom dialog.</para>
+      ///
       /// <para>If a deferral is not taken on the event args, the external URI scheme launch is
       /// blocked until the event handler returns.  If a deferral is taken, the
       /// external URI scheme launch is blocked until the deferral is completed.
       /// The host also has the option to cancel the URI scheme launch.</para>
-      /// <para>The `NavigationStarting` and `NavigationCompleted` events will be raised,
+      ///
+      /// <para>The `OnNavigationStarting` and `OnNavigationCompleted` events will be raised,
       /// regardless of whether the `Cancel` property is set to `TRUE` or
-      /// `FALSE`. The `NavigationCompleted` event will be raised with the `IsSuccess` property
+      /// `FALSE`. The `OnNavigationCompleted` event will be raised with the `IsSuccess` property
       /// set to `FALSE` and the `WebErrorStatus` property set to `ConnectionAborted` regardless of
       /// whether the host sets the `Cancel` property on the
-      /// `ICoreWebView2LaunchingExternalUriSchemeEventArgs`. The `SourceChanged`, `ContentLoading`,
-      /// and `HistoryChanged` events will not be raised for this navigation to the external URI
+      /// `ICoreWebView2LaunchingExternalUriSchemeEventArgs`. The `OnSourceChanged`, `OnContentLoading`,
+      /// and `OnHistoryChanged` events will not be raised for this navigation to the external URI
       /// scheme regardless of the `Cancel` property.</para>
+      ///
       /// <para>The `OnLaunchingExternalUriScheme` event will be raised after the
-      /// `NavigationStarting` event and before the `NavigationCompleted` event.</para>
+      /// `OnNavigationStarting` event and before the `OnNavigationCompleted` event.</para>
+      ///
       /// <para>The default `CoreWebView2Settings` will also be updated upon navigation to an external
       /// URI scheme. If a setting on the `CoreWebView2Settings` interface has been changed,
       /// navigating to an external URI scheme will trigger the `CoreWebView2Settings` to update.</para>
+      ///
       /// <para>The WebView2 may not display the default dialog based on user settings, browser settings,
       /// and whether the origin is determined as a
       /// [trustworthy origin](https://w3c.github.io/webappsec-secure-contexts#
       /// potentially-trustworthy-origin); however, the event will still be raised.</para>
+      ///
       /// <para>If the request is initiated by a cross-origin frame without a user gesture,
       /// the request will be blocked and the `OnLaunchingExternalUriScheme` event will not
-      /// be raised. A URI scheme may be blocked for safety reasons. In this case the
-      /// `LaunchingExternalUriScheme` event will not be raised. The default dialog may show
-      /// an "always allow" checkbox which allows the user to opt-in to relaxed security
-      /// (i.e. skipping future default dialogs) for the combination of the URI scheme and the
-      /// origin of the page initiating this external URI scheme launch. The checkbox is offered
-      /// so long as the group policy to show the checkbox is not explicitly disabled and there
-      /// is a trustworthy initiating origin. If the user has checked this box, future attempts
-      /// to launch this URI scheme will still raise the event.</para>
+      /// be raised.</para>
       /// </summary>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_18#add_launchingexternalurischeme">See the ICoreWebView2_18 article.</see></para>
@@ -3617,6 +3962,356 @@ type
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2compositioncontroller4#add_nonclientregionchanged">See the ICoreWebView2CompositionController4 article.</see></para>
       /// </remarks>
       property OnNonClientRegionChanged                        : TOnNonClientRegionChangedEvent                        read FOnNonClientRegionChanged                        write FOnNonClientRegionChanged;
+      /// <summary>
+      /// <para>Event for non-persistent notifications.</para>
+      ///
+      /// <para>If a deferral is not taken on the event args, the subsequent scripts after
+      /// the DOM notification creation call (i.e. `Notification()`) are blocked
+      /// until the event handler returns. If a deferral is taken, the scripts are
+      /// blocked until the deferral is completed.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_24#add_notificationreceived">See the ICoreWebView2_24 article.</see></para>
+      /// </remarks>
+      property OnNotificationReceived                          : TOnNotificationReceivedEvent                          read FOnNotificationReceived                          write FOnNotificationReceived;
+      /// <summary>
+      /// This event is raised when the notification is closed by the web code, such as through
+      /// `notification.close()`. You don't need to call `ReportClosed` since this is
+      /// coming from the web code.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2notification#add_closerequested">See the ICoreWebView2Notification article.</see></para>
+      /// </remarks>
+      property OnNotificationCloseRequested                    : TOnNotificationCloseRequestedEvent                    read FOnNotificationCloseRequested                    write FOnNotificationCloseRequested;
+      /// <summary>
+      /// This event is raised when save as is triggered, programmatically or manually.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_25#add_saveasuishowing">See the ICoreWebView2_25 article.</see></para>
+      /// </remarks>
+      property OnSaveAsUIShowing                               : TOnSaveAsUIShowingEvent                               read FOnSaveAsUIShowing                               write FOnSaveAsUIShowing;
+      /// <summary>
+      /// This event receives the result of the `ShowSaveAsUI` method.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_25#showsaveasui">See the ICoreWebView2_25 article.</see></para>
+      /// </remarks>
+      property OnShowSaveAsUICompleted                        : TOnShowSaveAsUICompletedEvent                          read FOnShowSaveAsUICompleted                         write FOnShowSaveAsUICompleted;
+      /// <summary>
+      /// <para>This event will be raised during system FileTypePolicy
+      /// checking the dangerous file extension list.</para>
+      /// <para>Developers can specify their own logic for determining whether
+      /// to allow a particular type of file to be saved from the document origin URI.
+      /// Developers can also determine the save decision based on other criteria.</para>
+      /// <para>Here are two properties in `ICoreWebView2SaveFileSecurityCheckStartingEventArgs`
+      /// to manage the decision: `CancelSave` and `SuppressDefaultPolicy`.</para>
+      /// <para>Table of Properties' value and result:</para>
+      /// <code>
+      /// | CancelSave | SuppressDefaultPolicy | Result
+      /// | ---------- | ------ | ---------------------
+      /// | False      | False  | Perform the default policy check. It may show the
+      /// |            |        | security warning UI if the file extension is
+      /// |            |        | dangerous.
+      /// | ---------- | ------ | ---------------------
+      /// | False      | True   | Skip the default policy check and the possible
+      /// |            |        | security warning. Start saving or downloading.
+      /// | ---------- | ------ | ---------------------
+      /// | True       | Any    | Skip the default policy check and the possible
+      /// |            |        | security warning. Abort save or download.
+      /// </code>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_26#add_savefilesecuritycheckstarting">See the ICoreWebView2_26 article.</see></para>
+      /// <para><see href="https://github.com/MicrosoftEdge/WebView2Feedback/blob/main/specs/FileTypePolicy.md">See the FileTypePolicy API article.</see></para>
+      /// </remarks>
+      property OnSaveFileSecurityCheckStarting                : TOnSaveFileSecurityCheckStartingEvent                  read FOnSaveFileSecurityCheckStarting                 write FOnSaveFileSecurityCheckStarting;
+      /// <summary>
+      /// `OnScreenCaptureStarting` event is raised when the [Screen Capture API](https://www.w3.org/TR/screen-capture/)
+      /// is requested by the user using getDisplayMedia().
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_27#add_screencapturestarting">See the ICoreWebView2_27 article.</see></para>
+      /// </remarks>
+      property OnScreenCaptureStarting                        : TOnScreenCaptureStartingEvent                          read FOnScreenCaptureStarting                         write FOnScreenCaptureStarting;
+      /// <summary>
+      /// <para>`OnFrameScreenCaptureStarting` is raised when content in an iframe or any of its
+      /// descendant iframes requests permission to use the Screen Capture
+      /// API from getDisplayMedia().</para>
+      ///
+      /// <para>This relates to the `ScreenCaptureStarting` event on the
+      /// `CoreWebView2`.</para>
+      /// <para>Both these events will be raised in the case of an iframe requesting
+      /// screen capture. The `CoreWebView2Frame`'s event handlers will be invoked
+      /// before the event handlers on the `CoreWebView2`. If the `Handled`
+      /// property of the `ScreenCaptureStartingEventArgs` is set to TRUE
+      /// within the`CoreWebView2Frame` event handler, then the event will not
+      /// be raised on the `CoreWebView2`, and its event handlers will not be
+      /// invoked.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frame6#add_screencapturestarting">See the ICoreWebView2Frame6 article.</see></para>
+      /// </remarks>
+      property OnFrameScreenCaptureStarting                   : TOnFrameScreenCaptureStartingEvent                     read FOnFrameScreenCaptureStarting                    write FOnFrameScreenCaptureStarting;
+      /// <summary>
+      /// Raised when a new direct descendant iframe is created.
+      /// Handle this event to get access to ICoreWebView2Frame objects.
+      /// Use `OnFrameDestroyed` to listen for when this iframe goes away.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frame7">See the ICoreWebView2Frame7 article.</see></para>
+      /// </remarks>
+      property OnFrameChildFrameCreated                       : TOnFrameChildFrameCreatedEvent                         read FOnFrameChildFrameCreated                        write FOnFrameChildFrameCreated;
+      /// <summary>
+      /// This event is raised when the index of the currently active match changes.
+      /// This can happen when the user navigates to a different match or when the active match is changed programmatically.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#add_activematchindexchanged">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      property OnFindActiveMatchIndexChanged                  : TOnFindActiveMatchIndexChangedEvent                    read FOnFindActiveMatchIndexChanged                   write FOnFindActiveMatchIndexChanged;
+      /// <summary>
+      /// This event is raised when the total count of matches in the document changes due to a new find session or changes in the document.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#add_matchcountchanged">See the ICoreWebView2Find article.</see></para>
+      /// </remarks>
+      property OnFindMatchCountChanged                        : TOnFindMatchCountChangedEvent                          read FOnFindMatchCountChanged                         write FOnFindMatchCountChanged;
+      /// <summary>
+      /// This event receives the result of the FindStart method.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2find#start">See the ICoreWebView2Find article.</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2findstartcompletedhandler">See the ICoreWebView2FindStartCompletedHandler article.</see></para>
+      /// </remarks>
+      property OnFindStartCompleted                           : TOnFindStartCompletedEvent                             read FOnFindStartCompleted                            write FOnFindStartCompleted;
+      /// <summary>
+      /// <para>`DragStarting` is a deferrable event that is raised when the WebView2
+      /// detects a drag started within the WebView2.</para>
+      /// <para>WebView2's default drag behavior is to synchronously call DoDragDrop when
+      /// it detects drag. This event's args expose the data WebView2 uses to call
+      /// DoDragDrop to allow users to implement their own drag logic and override
+      /// WebView2's.</para>
+      /// <para>Handlers of this event must set the `Handled` event to true in order to
+      /// override WebView2's default logic. When invoking drag logic asynchronously
+      /// using a deferral, handlers must take care to follow these steps in order:</para>
+      /// <code>
+      ///   * Invoke asynchronous drag logic
+      ///   * Set the event args `Handled` property true
+      ///   * Complete the deferral
+      /// </code>
+      /// <para>In the asynchronous case, WebView2 decides whether or not to invoke its
+      /// default drag logic when the deferral completes. So the event args'
+      /// `Handled` property must be true when the deferral is completed.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2compositioncontroller5#add_dragstarting">See the ICoreWebView2CompositionController5 article.</see></para>
+      /// </remarks>
+      property OnDragStarting                                 : TOnDragStartingEvent                                   read FOnDragStarting                                  write FOnDragStarting;
+      /// <summary>
+      /// <para>Subscribe to this event that gets raised when a new dedicated worker is created.</para>
+      ///
+      /// <para>A Dedicated Worker is a type of web worker that allows you to run Javascript
+      /// code in the background without blocking the main thread, making them useful
+      /// for tasks like heavy computations, data processing, and parallel execution.</para>
+      /// <para>It is "dedicated" because it is linked to a single parent document and cannot
+      /// be shared with other scripts.</para>
+      ///
+      /// <para>This event is raised when a web application creates a dedicated worker using the
+      /// `new Worker("/worker.js")` method. See the
+      /// [Worker](https://developer.mozilla.org/docs/Web/API/Worker/Worker)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2_29#add_dedicatedworkercreated">See the ICoreWebView2_29 article.</see></para>
+      /// </remarks>
+      property OnDedicatedWorkerCreated                       : TOnDedicatedWorkerCreatedEvent                         read FOnDedicatedWorkerCreated                        write FOnDedicatedWorkerCreated;
+      /// <summary>
+      /// <para>Subscribe to this event that gets raised when a new dedicated worker is created from a
+      /// dedicated worker.</para>
+      ///
+      /// <para>A Dedicated Worker is a type of web worker that allows you to run Javascript
+      /// code in the background without blocking the main thread, making them useful
+      /// for tasks like heavy computations, data processing, and parallel execution.</para>
+      /// <para>It is "dedicated" because it is linked to a single parent document and cannot
+      /// be shared with other scripts.</para>
+      ///
+      /// <para>This event is raised when a dedicated creates a dedicated worker using the
+      /// `new Worker("/worker.js")` method. See the
+      /// [Worker](https://developer.mozilla.org/docs/Web/API/Worker/Worker)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2dedicatedworker#add_dedicatedworkercreated">See the ICoreWebView2DedicatedWorker article.</see></para>
+      /// </remarks>
+      property OnDedicatedWorkerCreated2                      : TOnDedicatedWorkerCreated2Event                        read FOnDedicatedWorkerCreated2                       write FOnDedicatedWorkerCreated2;
+      /// <summary>
+      /// <para>Add an event handler for the `Destroying` event that is raised when the
+      /// worker object is Destroying.</para>
+      ///
+      /// <para>A worker object is Destroying when the worker script is terminated or when
+      /// the `CoreWebView2DedicatedWorker` object is Destroying.</para>
+      ///
+      /// <para>If the worker has already been destroyed before the event handler is registered,
+      /// the handler will never be called.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2dedicatedworker#add_destroying">See the ICoreWebView2DedicatedWorker article.</see></para>
+      /// </remarks>
+      property OnDedicatedWorkerDestroying                    : TOnDedicatedWorkerDestroyingEvent                      read FOnDedicatedWorkerDestroying                     write FOnDedicatedWorkerDestroying;
+      /// <summary>
+      /// <para>`OnWebMessageReceived` is fired, when the
+      /// `ICoreWebView2Settings.IsWebMessageEnabled` setting is set TRUE and the
+      /// worker runs `self.chrome.webview.postMessage`. The `postMessage` function
+      /// is `void postMessage(object)` where object is any object supported by JSON
+      /// conversion.</para>
+      ///
+      /// <para>If the worker calls `postMessage` multiple times, the corresponding
+      /// `OnWebMessageReceived` events are guaranteed to be fired in the same order.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2dedicatedworker#add_webmessagereceived">See the ICoreWebView2DedicatedWorker article.</see></para>
+      /// </remarks>
+      property OnDedicatedWorkerWebMessageReceived            : TOnDedicatedWorkerWebMessageReceivedEvent              read FOnDedicatedWorkerWebMessageReceived             write FOnDedicatedWorkerWebMessageReceived;
+      /// <summary>
+      /// <para>Subscribe to this event that gets raised when a new dedicated worker is created
+      /// from an iframe.</para>
+      ///
+      /// <para>A Dedicated Worker is a type of web worker that allows you to run Javascript
+      /// code in the background without blocking the main thread, making them useful
+      /// for tasks like heavy computations, data processing, and parallel execution.</para>
+      /// <para>It is "dedicated" because it is linked to a single parent document and cannot
+      /// be shared with other scripts.</para>
+      ///
+      /// <para>This event is raised when a web application creates a dedicated worker using the
+      /// `new Worker("/worker.js")` method. See the
+      /// [Worker](https://developer.mozilla.org/docs/Web/API/Worker/Worker)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2frame8#add_dedicatedworkercreated">See the ICoreWebView2Frame8 article.</see></para>
+      /// </remarks>
+      property OnFrameDedicatedWorkerCreated                  : TOnFrameDedicatedWorkerCreatedEvent                    read FOnFrameDedicatedWorkerCreated                   write FOnFrameDedicatedWorkerCreated;
+      /// <summary>
+      /// <para>Add an event handler for the `Destroying` event that is raised when the
+      /// worker object is Destroying.</para>
+      /// <para>A worker object is Destroying when the worker script is terminated or when
+      /// the `CoreWebView2ServiceWorker` object is Destroying.</para>
+      /// <para>If the worker has already been destroyed before the event handler is registered,
+      /// the handler will never be called.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworker#add_destroying">See the ICoreWebView2ServiceWorker article.</see></para>
+      /// </remarks>
+      property OnServiceWorkerDestroying                      : TOnServiceWorkerDestroyingEvent                        read FOnServiceWorkerDestroying                       write FOnServiceWorkerDestroying;
+      /// <summary>
+      /// <para>`OnWebMessageReceived` is fired, when the
+      /// `ICoreWebView2Settings.IsWebMessageEnabled` setting is set TRUE and the
+      /// worker runs `self.chrome.webview.postMessage`. The `postMessage` function
+      /// is `void postMessage(object)` where object is any object supported by JSON
+      /// conversion.</para>
+      /// <para>If the worker calls `postMessage` multiple times, the corresponding
+      /// `WebMessageReceived` events are guaranteed to be fired in the same order.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworker#add_webmessagereceived">See the ICoreWebView2ServiceWorker article.</see></para>
+      /// </remarks>
+      property OnServiceWorkerWebMessageReceived              : TOnServiceWorkerWebMessageReceivedEvent                read FOnServiceWorkerWebMessageReceived               write FOnServiceWorkerWebMessageReceived;
+      /// <summary>
+      /// <para>A ServiceWorker is a specific type of worker that takes a JavaScript file
+      /// that can control the web-page/site that it is associated with,
+      /// intercepting and modifying navigation and resource requests, and caching
+      /// resources in a very granular fashion to give you complete control
+      /// over how app behaves in certain situations.</para>
+      ///
+      /// <para>Service workers essentially act as proxy servers that sit between web
+      /// applications, the browser, and the network (when available). They run in
+      /// a different context from the web page, which means they have no direct access
+      /// to the DOM. Unlike dedicated and shared workers, which may have direct access to a
+      /// global scope shared with other scripts, service workers operate in isolation
+      /// from the DOM, ensuring a more secure and controlled environment.</para>
+      ///
+      /// <para>This event is raised when a web application registers a service worker using the
+      /// `navigator.serviceWorker.register("/sw.js")` method. See the
+      /// [Service Worker Registration](https://developer.mozilla.org/docs/Web/API/ServiceWorkerRegistration)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworkermanager#add_serviceworkerregistered">See the ICoreWebView2ServiceWorkerManager article.</see></para>
+      /// </remarks>
+      property OnServiceWorkerRegistered                      : TOnServiceWorkerRegisteredEvent                        read FOnServiceWorkerRegistered                       write FOnServiceWorkerRegistered;
+      /// <summary>
+      /// Receives the result of the TCoreWebView2ServiceWorkerManager.GetServiceWorkerRegistrations and TCoreWebView2ServiceWorkerManager.GetServiceWorkerRegistrationsForScope methods.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworkermanager#getserviceworkerregistrations">See the ICoreWebView2ServiceWorkerManager article.</see></para>
+      /// </remarks>
+      property OnGetServiceWorkerRegistrationsCompleted       : TOnGetServiceWorkerRegistrationsCompletedEvent         read FOnGetServiceWorkerRegistrationsCompleted        write FOnGetServiceWorkerRegistrationsCompleted;
+      /// <summary>
+      /// <para>This event is raised when a service worker is activated. A service worker is
+      /// activated when its script has been successfully registered and it is ready to
+      /// control the pages within the scope of the registration.</para>
+      ///
+      /// <para>This event is also raised when an updated version of a service worker reaches the active state.
+      /// In such a case, the existing CoreWebView2ServiceWorker object is destroying, and this event is
+      /// raised with a new CoreWebView2ServiceWorker object representing the updated service worker.
+      /// The active service worker is the one that receives fetch and message events for the pages it controls.
+      /// See the [Service Worker](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/active)
+      /// documentation for more information.</para>
+      ///
+      /// <para>If you register for the `OnServiceWorkerActivated` event and the registration already
+      /// has an active worker, the event handler is not called immediately. Instead, it waits
+      /// for the next activation event to occur. Therefore, you should first check if an active
+      /// service worker is running by using the `TCoreWebView2ServiceWorkerRegistration.ActiveServiceWorker` property.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworkerregistration#add_serviceworkeractivated">See the ICoreWebView2ServiceWorkerRegistration article.</see></para>
+      /// </remarks>
+      property OnServiceWorkerActivated                       : TOnServiceWorkerActivatedEvent                         read FOnServiceWorkerActivated                        write FOnServiceWorkerActivated;
+      /// <summary>
+      /// <para>This event is raised when the worker registration is
+      /// unregistered using the JS api `registration.unregister()`. See the
+      /// [Unregister](https://developer.mozilla.org/docs/Web/API/ServiceWorkerRegistration/unregister)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2serviceworkerregistration#add_unregistering">See the ICoreWebView2ServiceWorkerRegistration article.</see></para>
+      /// </remarks>
+      property OnServiceWorkerRegistrationUnregistering       : TOnServiceWorkerRegistrationUnregisteringEvent         read FOnServiceWorkerRegistrationUnregistering        write FOnServiceWorkerRegistrationUnregistering;
+      /// <summary>
+      /// <para>A SharedWorker is a specific type of worker that can be accessed from several
+      /// browsing contexts, such as multiple windows, iframes, or even other workers.
+      /// Unlike Dedicated Workers, which have their own separate global scope, SharedWorkers
+      /// share a common global scope called SharedWorkerGlobalScope.</para>
+      ///
+      /// <para>This event is raised when a web application creates a shared worker using the
+      /// `new SharedWorker("worker.js")` method. See the
+      /// [Shared Worker](https://developer.mozilla.org/docs/Web/API/SharedWorker)
+      /// for more information.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2sharedworkermanager#add_sharedworkercreated">See the ICoreWebView2SharedWorkerManager article.</see></para>
+      /// </remarks>
+      property OnSharedWorkerCreated                          : TOnSharedWorkerCreatedEvent                            read FOnSharedWorkerCreated                           write FOnSharedWorkerCreated;
+      /// <summary>
+      /// Receives the result of the TCoreWebView2SharedWorkerManager.GetSharedWorkers method.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2getsharedworkerscompletedhandler#getsharedworkers">See the ICoreWebView2GetSharedWorkersCompletedHandler article.</see></para>
+      /// </remarks>
+      property OnGetSharedWorkersCompleted                    : TOnGetSharedWorkersCompletedEvent                      read FOnGetSharedWorkersCompleted                     write FOnGetSharedWorkersCompleted;
+      /// <summary>
+      /// <para>This event is raised when the worker object is Destroying.</para>
+      ///
+      /// <para>A worker object is Destroying when the worker script is terminated or when
+      /// the `CoreWebView2SharedWorker` object is Destroying.</para>
+      ///
+      /// <para>If the worker has already been destroyed before the event handler is registered,
+      /// the handler will never be called.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2sharedworker#add_destroying">See the ICoreWebView2SharedWorker article.</see></para>
+      /// </remarks>
+      property OnSharedWorkerDestroying                       : TOnSharedWorkerDestroyingEvent                         read FOnSharedWorkerDestroying                        write FOnSharedWorkerDestroying;
   end;
 
 implementation
@@ -3636,6 +4331,8 @@ begin
   FCoreWebView2CompositionController               := nil;
   FCoreWebView2                                    := nil;
   FCoreWebView2Profile                             := nil;
+  FCoreWebView2FindOptions                         := nil;
+  FCoreWebView2Find                                := nil;
   FDefaultURL                                      := '';
   FUseDefaultEnvironment                           := False;
   FUseCompositionController                        := False;
@@ -3645,6 +4342,8 @@ begin
   FProfileName                                     := '';
   FIsInPrivateModeEnabled                          := False;
   FScriptLocale                                    := '';
+  FDefaultBackgroundColor                          := TColor($FFFFFFFF); // opaque white
+  FAllowHostInputProcessing                        := False;
   FClearBrowsingDataCompletedHandler               := nil;
   FSetPermissionStateCompletedHandler              := nil;
   FGetNonDefaultPermissionSettingsCompletedHandler := nil;
@@ -3774,6 +4473,32 @@ begin
   FOnProfileDeleted                                := nil;
   FOnExecuteScriptWithResultCompleted              := nil;
   FOnNonClientRegionChanged                        := nil;
+  FOnNotificationReceived                          := nil;
+  FOnNotificationCloseRequested                    := nil;
+  FOnSaveAsUIShowing                               := nil;
+  FOnShowSaveAsUICompleted                         := nil;
+  FOnSaveFileSecurityCheckStarting                 := nil;
+  FOnScreenCaptureStarting                         := nil;
+  FOnFrameScreenCaptureStarting                    := nil;
+  FOnFrameChildFrameCreated                        := nil;
+  FOnFindActiveMatchIndexChanged                   := nil;
+  FOnFindMatchCountChanged                         := nil;
+  FOnFindStartCompleted                            := nil;
+  FOnDragStarting                                  := nil;
+  FOnDedicatedWorkerCreated                        := nil;
+  FOnDedicatedWorkerCreated2                       := nil;
+  FOnDedicatedWorkerDestroying                     := nil;
+  FOnDedicatedWorkerWebMessageReceived             := nil;
+  FOnFrameDedicatedWorkerCreated                   := nil;
+  FOnServiceWorkerDestroying                       := nil;
+  FOnServiceWorkerWebMessageReceived               := nil;
+  FOnServiceWorkerRegistered                       := nil;
+  FOnGetServiceWorkerRegistrationsCompleted        := nil;
+  FOnServiceWorkerActivated                        := nil;
+  FOnServiceWorkerRegistrationUnregistering        := nil;
+  FOnSharedWorkerCreated                           := nil;
+  FOnGetSharedWorkersCompleted                     := nil;
+  FOnSharedWorkerDestroying                        := nil;
 end;
 
 destructor TWVBrowserBase.Destroy;
@@ -3781,6 +4506,8 @@ begin
   try
     RestoreOldCompWndProc;
     DestroyProfile;
+    DestroyFindOptions;
+    DestroyFind;
     DestroyPrintSettings;
     DestroySettings;
     DestroyEnvironment;
@@ -3826,6 +4553,18 @@ procedure TWVBrowserBase.DestroyProfile;
 begin
   if assigned(FCoreWebView2Profile) then
     FreeAndNil(FCoreWebView2Profile);
+end;
+
+procedure TWVBrowserBase.DestroyFindOptions;
+begin
+  if assigned(FCoreWebView2FindOptions) then
+    FreeAndNil(FCoreWebView2FindOptions);
+end;
+
+procedure TWVBrowserBase.DestroyFind;
+begin
+  if assigned(FCoreWebView2Find) then
+    FreeAndNil(FCoreWebView2Find);
 end;
 
 procedure TWVBrowserBase.DestroySettings;
@@ -4106,23 +4845,29 @@ begin
             FCoreWebView2.RemoveWebResourceRequestedFilterWithRequestSourceKinds(uri, ResourceContext, requestSourceKinds);
 end;
 
-// This function is asynchronous and it triggers the TWVBrowserBase.OnCapturePreviewCompleted event when it finishes
+function TWVBrowserBase.PostWebMessageAsJsonWithAdditionalObjects(const webMessageAsJson: wvstring;
+                                                                  const additionalObjects: ICoreWebView2ObjectCollectionView): boolean;
+begin
+  Result := Initialized and
+            FCoreWebView2.PostWebMessageAsJsonWithAdditionalObjects(webMessageAsJson, additionalObjects);
+end;
+
 function TWVBrowserBase.CapturePreview(aImageFormat: TWVCapturePreviewImageFormat; const aImageStream: IStream) : boolean;
 begin
   Result := Initialized and
             FCoreWebView2.CapturePreview(aImageFormat, aImageStream, self);
 end;
 
-function TWVBrowserBase.EnvironmentCompletedHandler_Invoke(errorCode: HRESULT; const createdEnvironment: ICoreWebView2Environment): HRESULT;
+function TWVBrowserBase.EnvironmentCompletedHandler_Invoke(errorCode: HRESULT; const result_: ICoreWebView2Environment): HRESULT;
 var
   TempError : wvstring;
 begin
   Result := S_OK;
 
-  if succeeded(errorCode) and assigned(createdEnvironment) then
+  if succeeded(errorCode) and assigned(result_) then
     begin
       DestroyEnvironment;
-      FCoreWebView2Environment := TCoreWebView2Environment.Create(createdEnvironment);
+      FCoreWebView2Environment := TCoreWebView2Environment.Create(result_);
 
       doOnEnvironmentCompleted;
 
@@ -4146,23 +4891,25 @@ begin
     end;
 end;
 
-function TWVBrowserBase.ControllerCompletedHandler_Invoke(errorCode: HRESULT; const createdController: ICoreWebView2Controller): HRESULT;
+function TWVBrowserBase.ControllerCompletedHandler_Invoke(errorCode: HRESULT; const result_: ICoreWebView2Controller): HRESULT;
 var
   TempSettings      : ICoreWebView2Settings;
   TempPrintSettings : ICoreWebView2PrintSettings;
   TempCoreWebView2  : ICoreWebView2;
+  TempFindOptions   : ICoreWebView2FindOptions;
   TempError         : wvstring;
 begin
   Result            := S_OK;
   TempSettings      := nil;
   TempCoreWebView2  := nil;
   TempPrintSettings := nil;
+  TempFindOptions   := nil;
 
   try
-    if succeeded(errorCode) and assigned(createdController) then
+    if succeeded(errorCode) and assigned(result_) then
       begin
         DestroyController;
-        FCoreWebView2Controller := TCoreWebView2Controller.Create(createdController);
+        FCoreWebView2Controller := TCoreWebView2Controller.Create(result_);
 
         doOnControllerCompleted;
 
@@ -4197,6 +4944,12 @@ begin
 
                 if assigned(FCoreWebView2CompositionController) then
                   FCoreWebView2CompositionController.AddAllBrowserEvents(self);
+
+                if FCoreWebView2Environment.CreateFindOptions(TempFindOptions) then
+                  begin
+                    DestroyFindOptions;
+                    FCoreWebView2FindOptions := TCoreWebView2FindOptions.Create(TempFindOptions);
+                  end;
 
                 doOnAfterCreated;
 
@@ -4414,6 +5167,7 @@ end;
 function TWVBrowserBase.ZoomFactorChangedEventHandler_Invoke(const sender: ICoreWebView2Controller; const args: IUnknown): HRESULT;
 begin
   Result := S_OK;
+  CalculateZoomStep;
   doOnZoomFactorChanged(sender);
 end;
 
@@ -4441,7 +5195,7 @@ begin
   doOnLostFocus(sender);
 end;
 
-function TWVBrowserBase.CreateCoreWebView2CompositionControllerCompletedHandler_Invoke(errorCode: HResult; const webView: ICoreWebView2CompositionController): HRESULT;
+function TWVBrowserBase.CreateCoreWebView2CompositionControllerCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2CompositionController): HRESULT;
 var
   TempControllerIntf : ICoreWebView2Controller;
   TempError          : wvstring;
@@ -4449,14 +5203,14 @@ var
 begin
   Result := S_OK;
 
-  if succeeded(errorCode) and assigned(webView) then
+  if succeeded(errorCode) and assigned(result_) then
     begin
       DestroyCompositionController;
-      FCoreWebView2CompositionController := TCoreWebView2CompositionController.Create(webView);
+      FCoreWebView2CompositionController := TCoreWebView2CompositionController.Create(result_);
 
       doOnCompositionControllerCompleted;
 
-      TempHResult := webView.QueryInterface(IID_ICoreWebView2Controller, TempControllerIntf);
+      TempHResult := result_.QueryInterface(IID_ICoreWebView2Controller, TempControllerIntf);
 
       if succeeded(TempHResult) then
         Result := ControllerCompletedHandler_Invoke(errorCode, TempControllerIntf)
@@ -4509,22 +5263,22 @@ begin
   doOnDOMContentLoadedEvent(sender, args);
 end;
 
-function TWVBrowserBase.WebResourceResponseViewGetContentCompletedHandler_Invoke(errorCode: HResult; const Content: IStream; aResourceID : integer): HRESULT;
+function TWVBrowserBase.WebResourceResponseViewGetContentCompletedHandler_Invoke(errorCode: HResult; const result_: IStream; aResourceID : integer): HRESULT;
 begin
   Result := S_OK;
-  doOnWebResourceResponseViewGetContentCompletedEvent(errorCode, Content, aResourceID);
+  doOnWebResourceResponseViewGetContentCompletedEvent(errorCode, result_, aResourceID);
 end;
 
-function TWVBrowserBase.GetCookiesCompletedHandler_Invoke(aResult : HResult; const aCookieList : ICoreWebView2CookieList): HRESULT;
+function TWVBrowserBase.GetCookiesCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2CookieList): HRESULT;
 begin
   Result := S_OK;
-  doOnGetCookiesCompletedEvent(aResult, aCookieList);
+  doOnGetCookiesCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.TrySuspendCompletedHandler_Invoke(errorCode: HResult; isSuccessful: Integer): HRESULT;
+function TWVBrowserBase.TrySuspendCompletedHandler_Invoke(errorCode: HResult; result_: Integer): HRESULT;
 begin
   Result := S_OK;
-  doOnTrySuspendCompletedEvent(errorCode, isSuccessful);
+  doOnTrySuspendCompletedEvent(errorCode, result_);
 end;
 
 function TWVBrowserBase.FrameCreatedEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2FrameCreatedEventArgs): HRESULT;
@@ -4545,10 +5299,10 @@ begin
   doOnClientCertificateRequestedEvent(sender, args);
 end;
 
-function TWVBrowserBase.PrintToPdfCompletedHandler_Invoke(errorCode: HResult; isSuccessful: Integer): HRESULT;
+function TWVBrowserBase.PrintToPdfCompletedHandler_Invoke(errorCode: HResult; result_: Integer): HRESULT;
 begin
   Result := S_OK;
-  doOnPrintToPdfCompletedEvent(errorCode, isSuccessful);
+  doOnPrintToPdfCompletedEvent(errorCode, result_);
 end;
 
 function TWVBrowserBase.BytesReceivedChangedEventHandler_Invoke(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer): HRESULT;
@@ -4581,13 +5335,13 @@ begin
   doOnFrameDestroyedEvent(sender, args, aFrameID);
 end;
 
-function TWVBrowserBase.CallDevToolsProtocolMethodCompletedHandler_Invoke(errorCode: HResult; returnObjectAsJson: PWideChar; aExecutionID : integer): HRESULT;
+function TWVBrowserBase.CallDevToolsProtocolMethodCompletedHandler_Invoke(errorCode: HResult; result_: PWideChar; aExecutionID : integer): HRESULT;
 begin
   Result := S_OK;
 
   case aExecutionID of
     WEBVIEW4DELPHI_DEVTOOLS_RETRIEVEMHTML_ID :
-      doOnRetrieveMHTMLCompleted(errorCode, wvstring(returnObjectAsJson));
+      doOnRetrieveMHTMLCompleted(errorCode, wvstring(result_));
 
     WEBVIEW4DELPHI_DEVTOOLS_CLEARBROWSERCACHE_ID :
       doOnClearCacheCompleted(errorCode);
@@ -4605,10 +5359,10 @@ begin
       doOnSimulateKeyEventCompleted(errorCode);
 
     WEBVIEW4DELPHI_DEVTOOLS_REFRESH_ID :
-      doOnRefreshIgnoreCacheCompleted(errorCode, wvstring(returnObjectAsJson));
+      doOnRefreshIgnoreCacheCompleted(errorCode, wvstring(result_));
 
     else
-      doOnCallDevToolsProtocolMethodCompletedEvent(errorCode, wvstring(returnObjectAsJson), aExecutionID);
+      doOnCallDevToolsProtocolMethodCompletedEvent(errorCode, wvstring(result_), aExecutionID);
   end;
 end;
 
@@ -4768,23 +5522,25 @@ begin
     FOnFaviconChanged(self, sender, args);
 end;
 
-procedure TWVBrowserBase.doOnGetFaviconCompletedEvent(      errorCode     : HResult;
-                                                      const faviconStream : IStream);
+procedure TWVBrowserBase.doOnGetFaviconCompletedEvent(      errorCode : HResult;
+                                                      const result_   : IStream);
 begin
   if assigned(FOnGetFaviconCompleted) then
-    FOnGetFaviconCompleted(self, errorCode, faviconStream);
+    FOnGetFaviconCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnPrintCompletedEvent(errorCode: HResult; printStatus: COREWEBVIEW2_PRINT_STATUS);
+procedure TWVBrowserBase.doOnPrintCompletedEvent(errorCode : HResult;
+                                                 result_   : COREWEBVIEW2_PRINT_STATUS);
 begin
   if assigned(FOnPrintCompleted) then
-    FOnPrintCompleted(self, errorCode, printStatus);
+    FOnPrintCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnPrintToPdfStreamCompletedEvent(errorCode: HResult; const pdfStream: IStream);
+procedure TWVBrowserBase.doOnPrintToPdfStreamCompletedEvent(      errorCode : HResult;
+                                                            const result_   : IStream);
 begin
   if assigned(FOnPrintToPdfStreamCompleted) then
-    FOnPrintToPdfStreamCompleted(self, errorCode, pdfStream);
+    FOnPrintToPdfStreamCompleted(self, errorCode, result_);
 end;
 
 procedure TWVBrowserBase.doOnGetCustomSchemes(var aSchemeRegistrations : TWVCustomSchemeRegistrationArray);
@@ -4811,10 +5567,11 @@ begin
     end;
 end;
 
-procedure TWVBrowserBase.doOnGetNonDefaultPermissionSettingsCompleted(errorCode: HResult; const collectionView: ICoreWebView2PermissionSettingCollectionView);
+procedure TWVBrowserBase.doOnGetNonDefaultPermissionSettingsCompleted(      errorCode : HResult;
+                                                                      const result_   : ICoreWebView2PermissionSettingCollectionView);
 begin
   if assigned(FOnGetNonDefaultPermissionSettingsCompleted) then
-    FOnGetNonDefaultPermissionSettingsCompleted(self, errorCode, collectionView);
+    FOnGetNonDefaultPermissionSettingsCompleted(self, errorCode, result_);
 end;
 
 procedure TWVBrowserBase.doOnSetPermissionStateCompleted(errorCode: HResult);
@@ -4823,58 +5580,244 @@ begin
     FOnSetPermissionStateCompleted(self, errorCode);
 end;
 
-procedure TWVBrowserBase.doOnLaunchingExternalUriSchemeEvent(const sender: ICoreWebView2; const args: ICoreWebView2LaunchingExternalUriSchemeEventArgs);
+procedure TWVBrowserBase.doOnLaunchingExternalUriSchemeEvent(const sender : ICoreWebView2;
+                                                             const args   : ICoreWebView2LaunchingExternalUriSchemeEventArgs);
 begin
   if assigned(FOnLaunchingExternalUriScheme) then
     FOnLaunchingExternalUriScheme(self, sender, args);
 end;
 
-procedure TWVBrowserBase.doOnGetProcessExtendedInfosCompletedEvent(errorCode: HResult; const value: ICoreWebView2ProcessExtendedInfoCollection);
+procedure TWVBrowserBase.doOnGetProcessExtendedInfosCompletedEvent(      errorCode : HResult;
+                                                                   const result_   : ICoreWebView2ProcessExtendedInfoCollection);
 begin
   if assigned(FOnGetProcessExtendedInfosCompleted) then
-    FOnGetProcessExtendedInfosCompleted(self, errorCode, value);
+    FOnGetProcessExtendedInfosCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnBrowserExtensionRemoveCompletedEvent(errorCode: HResult; const aExtensionID: wvstring);
+procedure TWVBrowserBase.doOnBrowserExtensionRemoveCompletedEvent(      errorCode    : HResult;
+                                                                  const aExtensionID : wvstring);
 begin
   if assigned(FOnBrowserExtensionRemoveCompleted) then
     FOnBrowserExtensionRemoveCompleted(self, errorCode, aExtensionID);
 end;
 
-procedure TWVBrowserBase.doOnBrowserExtensionEnableCompletedEvent(errorCode: HResult; const aExtensionID: wvstring);
+procedure TWVBrowserBase.doOnBrowserExtensionEnableCompletedEvent(      errorCode    : HResult;
+                                                                  const aExtensionID : wvstring);
 begin
   if assigned(FOnBrowserExtensionEnableCompleted) then
     FOnBrowserExtensionEnableCompleted(self, errorCode, aExtensionID);
 end;
 
-procedure TWVBrowserBase.doOnProfileAddBrowserExtensionCompletedEvent(errorCode: HResult; const extension: ICoreWebView2BrowserExtension);
+procedure TWVBrowserBase.doOnProfileAddBrowserExtensionCompletedEvent(      errorCode : HResult;
+                                                                      const result_   : ICoreWebView2BrowserExtension);
 begin
   if assigned(FOnProfileAddBrowserExtensionCompleted) then
-    FOnProfileAddBrowserExtensionCompleted(self, errorCode, extension);
+    FOnProfileAddBrowserExtensionCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnProfileGetBrowserExtensionsCompletedEvent(errorCode: HResult; const extensionList: ICoreWebView2BrowserExtensionList);
+procedure TWVBrowserBase.doOnProfileGetBrowserExtensionsCompletedEvent(      errorCode : HResult;
+                                                                       const result_   : ICoreWebView2BrowserExtensionList);
 begin
   if assigned(FOnProfileGetBrowserExtensionsCompleted) then
-    FOnProfileGetBrowserExtensionsCompleted(self, errorCode, extensionList);
+    FOnProfileGetBrowserExtensionsCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnProfileDeletedEvent(const sender: ICoreWebView2Profile; const args: IUnknown);
+procedure TWVBrowserBase.doOnProfileDeletedEvent(const sender : ICoreWebView2Profile;
+                                                 const args   : IUnknown);
 begin
   if assigned(FOnProfileDeleted) then
     FOnProfileDeleted(self, sender);
 end;
 
-procedure TWVBrowserBase.doOnExecuteScriptWithResultCompletedEvent(errorCode: HResult; const result_: ICoreWebView2ExecuteScriptResult; aExecutionID : integer);
+procedure TWVBrowserBase.doOnExecuteScriptWithResultCompletedEvent(      errorCode    : HResult;
+                                                                   const result_      : ICoreWebView2ExecuteScriptResult;
+                                                                         aExecutionID : integer);
 begin
   if assigned(FOnExecuteScriptWithResultCompleted) then
     FOnExecuteScriptWithResultCompleted(self, errorCode, result_, aExecutionID);
 end;
 
-procedure TWVBrowserBase.doOnNonClientRegionChangedEvent(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2NonClientRegionChangedEventArgs);
+procedure TWVBrowserBase.doOnNonClientRegionChangedEvent(const sender : ICoreWebView2CompositionController;
+                                                         const args   : ICoreWebView2NonClientRegionChangedEventArgs);
 begin
   if assigned(FOnNonClientRegionChanged) then
     FOnNonClientRegionChanged(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnNotificationReceivedEvent(const sender : ICoreWebView2;
+                                                       const args   : ICoreWebView2NotificationReceivedEventArgs);
+begin
+  if assigned(FOnNotificationReceived) then
+    FOnNotificationReceived(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnNotificationCloseRequestedEvent(const sender : ICoreWebView2Notification;
+                                                             const args   : IUnknown);
+begin
+  if assigned(FOnNotificationCloseRequested) then
+    FOnNotificationCloseRequested(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnSaveAsUIShowingEvent(const sender : ICoreWebView2;
+                                                  const args   : ICoreWebView2SaveAsUIShowingEventArgs);
+begin
+  if assigned(FOnSaveAsUIShowing) then
+    FOnSaveAsUIShowing(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnShowSaveAsUICompletedEvent(errorCode : HResult;
+                                                        result_   : COREWEBVIEW2_SAVE_AS_UI_RESULT);
+begin
+  if assigned(FOnShowSaveAsUICompleted) then
+    FOnShowSaveAsUICompleted(self, errorCode, result_);
+end;
+
+procedure TWVBrowserBase.doOnSaveFileSecurityCheckStartingEvent(const sender : ICoreWebView2;
+                                                                const args   : ICoreWebView2SaveFileSecurityCheckStartingEventArgs);
+begin
+  if assigned(FOnSaveFileSecurityCheckStarting) then
+    FOnSaveFileSecurityCheckStarting(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnScreenCaptureStartingEvent(const sender : ICoreWebView2;
+                                                        const args   : ICoreWebView2ScreenCaptureStartingEventArgs);
+begin
+  if assigned(FOnScreenCaptureStarting) then
+    FOnScreenCaptureStarting(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnFrameScreenCaptureStartingEvent(const sender   : ICoreWebView2Frame;
+                                                             const args     : ICoreWebView2ScreenCaptureStartingEventArgs;
+                                                                   aFrameID : cardinal);
+begin
+  if assigned(FOnFrameScreenCaptureStarting) then
+    FOnFrameScreenCaptureStarting(self, sender, args, aFrameID);
+end;
+
+procedure TWVBrowserBase.doOnFrameChildFrameCreatedEvent(const sender   : ICoreWebView2Frame;
+                                                         const args     : ICoreWebView2FrameCreatedEventArgs;
+                                                               aFrameID : cardinal);
+begin
+  if assigned(FOnFrameChildFrameCreated) then
+    FOnFrameChildFrameCreated(self, sender, args, aFrameID);
+end;
+
+procedure TWVBrowserBase.doOnFindActiveMatchIndexChangedEvent(const sender : ICoreWebView2Find;
+                                                              const args   : IUnknown);
+begin
+  if assigned(FOnFindActiveMatchIndexChanged) then
+    FOnFindActiveMatchIndexChanged(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnFindMatchCountChangedEvent(const sender : ICoreWebView2Find;
+                                                        const args   : IUnknown);
+begin
+  if assigned(FOnFindMatchCountChanged) then
+    FOnFindMatchCountChanged(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnFindStartCompletedEvent(errorCode: HResult);
+begin
+  if assigned(FOnFindStartCompleted) then
+    FOnFindStartCompleted(self, errorCode);
+end;
+
+procedure TWVBrowserBase.doOnDragStartingEvent(const sender : ICoreWebView2CompositionController;
+                                               const args   : ICoreWebView2DragStartingEventArgs);
+begin
+  if assigned(FOnDragStarting) then
+    FOnDragStarting(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnDedicatedWorkerCreatedEvent(const sender : ICoreWebView2;
+                                                         const args   : ICoreWebView2DedicatedWorkerCreatedEventArgs);
+begin
+  if assigned(FOnDedicatedWorkerCreated) then
+    FOnDedicatedWorkerCreated(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnDedicatedWorkerCreatedEvent2(const sender             : ICoreWebView2DedicatedWorker;
+                                                          const args               : ICoreWebView2DedicatedWorkerCreatedEventArgs;
+                                                                aWorkerID : cardinal);
+begin
+  if assigned(FOnDedicatedWorkerCreated2) then
+    FOnDedicatedWorkerCreated2(self, sender, args, aWorkerID);
+end;
+
+procedure TWVBrowserBase.doOnDedicatedWorkerDestroyingEvent(const sender             : ICoreWebView2DedicatedWorker;
+                                                            const args               : IUnknown;
+                                                                  aWorkerID : cardinal);
+begin
+  if assigned(FOnDedicatedWorkerDestroying) then
+    FOnDedicatedWorkerDestroying(self, sender, args, aWorkerID);
+end;
+
+procedure TWVBrowserBase.doOnDedicatedWorkerWebMessageReceivedEvent(const sender             : ICoreWebView2DedicatedWorker;
+                                                                    const args               : ICoreWebView2WebMessageReceivedEventArgs;
+                                                                          aWorkerID : cardinal);
+begin
+  if assigned(FOnDedicatedWorkerWebMessageReceived) then
+    FOnDedicatedWorkerWebMessageReceived(self, sender, args, aWorkerID);
+end;
+
+procedure TWVBrowserBase.doOnFrameDedicatedWorkerCreatedEvent(const sender: ICoreWebView2Frame; const args: ICoreWebView2DedicatedWorkerCreatedEventArgs; aFrameID: cardinal);
+begin
+  if assigned(FOnFrameDedicatedWorkerCreated) then
+    FOnFrameDedicatedWorkerCreated(self, sender, args, aFrameID);
+end;
+
+procedure TWVBrowserBase.doOnServiceWorkerDestroyingEvent(const sender: ICoreWebView2ServiceWorker; const args: IUnknown; aWorkerID: cardinal);
+begin
+  if assigned(FOnServiceWorkerDestroying) then
+    FOnServiceWorkerDestroying(self, sender, args, aWorkerID);
+end;
+
+procedure TWVBrowserBase.doOnServiceWorkerWebMessageReceivedEvent(const sender: ICoreWebView2ServiceWorker; const args: ICoreWebView2WebMessageReceivedEventArgs; aWorkerID: cardinal);
+begin
+  if assigned(FOnServiceWorkerWebMessageReceived) then
+    FOnServiceWorkerWebMessageReceived(self, sender, args, aWorkerID);
+end;
+
+procedure TWVBrowserBase.doOnServiceWorkerRegisteredEvent(const sender: ICoreWebView2ServiceWorkerManager; const args: ICoreWebView2ServiceWorkerRegisteredEventArgs);
+begin
+  if assigned(FOnServiceWorkerRegistered) then
+    FOnServiceWorkerRegistered(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnGetServiceWorkerRegistrationsCompletedEvent(errorCode: HResult; const result_: ICoreWebView2ServiceWorkerRegistrationCollectionView);
+begin
+  if assigned(FOnGetServiceWorkerRegistrationsCompleted) then
+    FOnGetServiceWorkerRegistrationsCompleted(self, errorCode, result_);
+end;
+
+procedure TWVBrowserBase.doOnServiceWorkerActivatedEvent(const sender: ICoreWebView2ServiceWorkerRegistration; const args: ICoreWebView2ServiceWorkerActivatedEventArgs);
+begin
+  if assigned(FOnServiceWorkerActivated) then
+    FOnServiceWorkerActivated(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnServiceWorkerRegistrationUnregisteringEvent(const sender: ICoreWebView2ServiceWorkerRegistration; const args: IUnknown);
+begin
+  if assigned(FOnServiceWorkerRegistrationUnregistering) then
+    FOnServiceWorkerRegistrationUnregistering(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnSharedWorkerCreatedEvent(const sender: ICoreWebView2SharedWorkerManager; const args: ICoreWebView2SharedWorkerCreatedEventArgs);
+begin
+  if assigned(FOnSharedWorkerCreated) then
+    FOnSharedWorkerCreated(self, sender, args);
+end;
+
+procedure TWVBrowserBase.doOnGetSharedWorkersCompletedEvent(errorCode: HResult; const result_: ICoreWebView2SharedWorkerCollectionView);
+begin
+  if assigned(FOnGetSharedWorkersCompleted) then
+    FOnGetSharedWorkersCompleted(self, errorCode, result_);
+end;
+
+procedure TWVBrowserBase.doOnSharedWorkerDestroyingEvent(const sender: ICoreWebView2SharedWorker; const args: IUnknown; aWorkerID: cardinal);
+begin
+  if assigned(FOnSharedWorkerDestroying) then
+    FOnSharedWorkerDestroying(self, sender, args, aWorkerID);
 end;
 
 procedure TWVBrowserBase.doOnRetrieveMHTMLCompleted(      aErrorCode          : HRESULT;
@@ -5005,10 +5948,10 @@ begin
     Result := copy(Result, 2, length(Result) - 2);
 end;
 
-function TWVBrowserBase.AddScriptToExecuteOnDocumentCreatedCompletedHandler_Invoke(errorCode: HResult; id: PWideChar): HRESULT;
+function TWVBrowserBase.AddScriptToExecuteOnDocumentCreatedCompletedHandler_Invoke(errorCode: HResult; result_: PWideChar): HRESULT;
 begin
   Result := S_OK;
-  doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(errorCode, wvstring(id));
+  doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(errorCode, wvstring(result_));
 end;
 
 function TWVBrowserBase.IsMutedChangedEventHandler_Invoke(const sender : ICoreWebView2;
@@ -5134,34 +6077,39 @@ begin
   doOnServerCertificateErrorDetectedEvent(sender, args);
 end;
 
-function TWVBrowserBase.FaviconChangedEventHandler_Invoke(const sender: ICoreWebView2; const args: IUnknown): HRESULT;
+function TWVBrowserBase.FaviconChangedEventHandler_Invoke(const sender : ICoreWebView2;
+                                                          const args   : IUnknown): HRESULT;
 begin
   Result := S_OK;
   doOnFaviconChangedEvent(sender, args);
 end;
 
-function TWVBrowserBase.GetFaviconCompletedHandler_Invoke(errorCode: HResult; const faviconStream: IStream): HRESULT;
+function TWVBrowserBase.GetFaviconCompletedHandler_Invoke(      errorCode : HResult;
+                                                          const result_   : IStream): HRESULT;
 begin
   Result := S_OK;
-  doOnGetFaviconCompletedEvent(errorCode, faviconStream);
+  doOnGetFaviconCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.PrintCompletedHandler_Invoke(errorCode: HResult; printStatus: COREWEBVIEW2_PRINT_STATUS): HRESULT;
+function TWVBrowserBase.PrintCompletedHandler_Invoke(errorCode : HResult;
+                                                     result_   : COREWEBVIEW2_PRINT_STATUS): HRESULT;
 begin
   Result := S_OK;
-  doOnPrintCompletedEvent(errorCode, printStatus);
+  doOnPrintCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.PrintToPdfStreamCompletedHandler_Invoke(errorCode: HResult; const pdfStream: IStream): HRESULT;
+function TWVBrowserBase.PrintToPdfStreamCompletedHandler_Invoke(      errorCode : HResult;
+                                                                const result_   : IStream): HRESULT;
 begin
   Result := S_OK;
-  doOnPrintToPdfStreamCompletedEvent(errorCode, pdfStream);
+  doOnPrintToPdfStreamCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.GetNonDefaultPermissionSettingsCompletedHandler_Invoke(errorCode: HResult; const collectionView: ICoreWebView2PermissionSettingCollectionView): HRESULT;
+function TWVBrowserBase.GetNonDefaultPermissionSettingsCompletedHandler_Invoke(      errorCode : HResult;
+                                                                               const result_   : ICoreWebView2PermissionSettingCollectionView): HRESULT;
 begin
   Result := S_OK;
-  doOnGetNonDefaultPermissionSettingsCompleted(errorCode, collectionView);
+  doOnGetNonDefaultPermissionSettingsCompleted(errorCode, result_);
 end;
 
 function TWVBrowserBase.SetPermissionStateCompletedHandler_Invoke(errorCode: HResult): HRESULT;
@@ -5170,73 +6118,273 @@ begin
   doOnSetPermissionStateCompleted(errorCode);
 end;
 
-function TWVBrowserBase.LaunchingExternalUriSchemeEventHandler_Invoke(const sender: ICoreWebView2; const args: ICoreWebView2LaunchingExternalUriSchemeEventArgs): HRESULT;
+function TWVBrowserBase.LaunchingExternalUriSchemeEventHandler_Invoke(const sender : ICoreWebView2;
+                                                                      const args   : ICoreWebView2LaunchingExternalUriSchemeEventArgs): HRESULT;
 begin
   Result := S_OK;
   doOnLaunchingExternalUriSchemeEvent(sender, args);
 end;
 
-function TWVBrowserBase.GetProcessExtendedInfosCompletedHandler_Invoke(errorCode: HResult; const value: ICoreWebView2ProcessExtendedInfoCollection): HRESULT;
+function TWVBrowserBase.GetProcessExtendedInfosCompletedHandler_Invoke(      errorCode : HResult;
+                                                                       const result_   : ICoreWebView2ProcessExtendedInfoCollection): HRESULT;
 begin
   Result := S_OK;
-  doOnGetProcessExtendedInfosCompletedEvent(errorCode, value);
+  doOnGetProcessExtendedInfosCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.BrowserExtensionRemoveCompletedHandler_Invoke(errorCode: HResult; const aExtensionID: wvstring): HRESULT;
+function TWVBrowserBase.BrowserExtensionRemoveCompletedHandler_Invoke(      errorCode    : HResult;
+                                                                      const aExtensionID : wvstring): HRESULT;
 begin
   Result := S_OK;
   doOnBrowserExtensionRemoveCompletedEvent(errorCode, aExtensionID);
 end;
 
-function TWVBrowserBase.BrowserExtensionEnableCompletedHandler_Invoke(errorCode: HResult; const aExtensionID: wvstring): HRESULT;
+function TWVBrowserBase.BrowserExtensionEnableCompletedHandler_Invoke(      errorCode    : HResult;
+                                                                      const aExtensionID : wvstring): HRESULT;
 begin
   Result := S_OK;
   doOnBrowserExtensionEnableCompletedEvent(errorCode, aExtensionID);
 end;
 
-function TWVBrowserBase.ProfileAddBrowserExtensionCompletedHandler_Invoke(errorCode: HResult; const extension: ICoreWebView2BrowserExtension): HRESULT;
+function TWVBrowserBase.ProfileAddBrowserExtensionCompletedHandler_Invoke(      errorCode : HResult;
+                                                                          const result_   : ICoreWebView2BrowserExtension): HRESULT;
 begin
   Result := S_OK;
-  doOnProfileAddBrowserExtensionCompletedEvent(errorCode, extension);
+  doOnProfileAddBrowserExtensionCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.ProfileGetBrowserExtensionsCompletedHandler_Invoke(errorCode: HResult; const extensionList: ICoreWebView2BrowserExtensionList): HRESULT;
+function TWVBrowserBase.ProfileGetBrowserExtensionsCompletedHandler_Invoke(      errorCode : HResult;
+                                                                           const result_   : ICoreWebView2BrowserExtensionList): HRESULT;
 begin
   Result := S_OK;
-  doOnProfileGetBrowserExtensionsCompletedEvent(errorCode, extensionList);
+  doOnProfileGetBrowserExtensionsCompletedEvent(errorCode, result_);
 end;
 
-function TWVBrowserBase.ProfileDeletedEventHandler_Invoke(const sender: ICoreWebView2Profile; const args: IUnknown): HRESULT;
+function TWVBrowserBase.ProfileDeletedEventHandler_Invoke(const sender : ICoreWebView2Profile;
+                                                          const args   : IUnknown): HRESULT;
 begin
   Result := S_OK;
   doOnProfileDeletedEvent(sender, args);
 end;
 
-function TWVBrowserBase.ExecuteScriptWithResultCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2ExecuteScriptResult; aExecutionID : integer): HRESULT;
+function TWVBrowserBase.ExecuteScriptWithResultCompletedHandler_Invoke(      errorCode    : HResult;
+                                                                       const result_      : ICoreWebView2ExecuteScriptResult;
+                                                                             aExecutionID : integer): HRESULT;
 begin
   Result := S_OK;
   doOnExecuteScriptWithResultCompletedEvent(errorCode, result_, aExecutionID);
 end;
 
-function TWVBrowserBase.NonClientRegionChangedEventHandler_Invoke(const sender: ICoreWebView2CompositionController; const args: ICoreWebView2NonClientRegionChangedEventArgs): HRESULT;
+function TWVBrowserBase.NonClientRegionChangedEventHandler_Invoke(const sender : ICoreWebView2CompositionController;
+                                                                  const args   : ICoreWebView2NonClientRegionChangedEventArgs): HRESULT;
 begin
   Result := S_OK;
   doOnNonClientRegionChangedEvent(sender, args);
 end;
 
-function TWVBrowserBase.ExecuteScriptCompletedHandler_Invoke(errorCode: HRESULT; resultObjectAsJson: PWideChar; aExecutionID : integer): HRESULT;
+function TWVBrowserBase.NotificationReceivedEventHandler_Invoke(const sender : ICoreWebView2;
+                                                                const args   : ICoreWebView2NotificationReceivedEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnNotificationReceivedEvent(sender, args);
+end;
+
+function TWVBrowserBase.NotificationCloseRequestedEventHandler_Invoke(const sender : ICoreWebView2Notification;
+                                                                      const args   : IUnknown): HRESULT;
+begin
+  Result := S_OK;
+  doOnNotificationCloseRequestedEvent(sender, args);
+end;
+
+function TWVBrowserBase.SaveAsUIShowingEventHandler_Invoke(const sender : ICoreWebView2;
+                                                           const args   : ICoreWebView2SaveAsUIShowingEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnSaveAsUIShowingEvent(sender, args);
+end;
+
+function TWVBrowserBase.ShowSaveAsUICompletedHandler_Invoke(errorCode : HResult;
+                                                            result_   : COREWEBVIEW2_SAVE_AS_UI_RESULT): HRESULT;
+begin
+  Result := S_OK;
+  doOnShowSaveAsUICompletedEvent(errorCode, result_);
+end;
+
+function TWVBrowserBase.SaveFileSecurityCheckStartingEventHandler_Invoke(const sender : ICoreWebView2;
+                                                                         const args   : ICoreWebView2SaveFileSecurityCheckStartingEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnSaveFileSecurityCheckStartingEvent(sender, args);
+end;
+
+function TWVBrowserBase.ScreenCaptureStartingEventHandler_Invoke(const sender : ICoreWebView2;
+                                                                 const args   : ICoreWebView2ScreenCaptureStartingEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnScreenCaptureStartingEvent(sender, args);
+end;
+
+function TWVBrowserBase.FrameScreenCaptureStartingEventHandler_Invoke(const sender   : ICoreWebView2Frame;
+                                                                      const args     : ICoreWebView2ScreenCaptureStartingEventArgs;
+                                                                            aFrameID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnFrameScreenCaptureStartingEvent(sender, args, aFrameID);
+end;
+
+function TWVBrowserBase.FrameChildFrameCreatedEventHandler_Invoke(const sender   : ICoreWebView2Frame;
+                                                                  const args     : ICoreWebView2FrameCreatedEventArgs;
+                                                                        aFrameID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnFrameChildFrameCreatedEvent(sender, args, aFrameID);
+end;
+
+function TWVBrowserBase.FindActiveMatchIndexChangedEventHandler_Invoke(const sender : ICoreWebView2Find;
+                                                                       const args   : IUnknown): HRESULT;
+begin
+  Result := S_OK;
+  doOnFindActiveMatchIndexChangedEvent(sender, args);
+end;
+
+function TWVBrowserBase.FindMatchCountChangedEventHandler_Invoke(const sender : ICoreWebView2Find;
+                                                                 const args   : IUnknown): HRESULT;
+begin
+  Result := S_OK;
+  doOnFindMatchCountChangedEvent(sender, args);
+end;
+
+function TWVBrowserBase.FindStartCompletedHandler_Invoke(errorCode: HResult): HRESULT;
+begin
+  Result := S_OK;
+  doOnFindStartCompletedEvent(errorCode);
+end;
+
+function TWVBrowserBase.DragStartingEventHandler_Invoke(const sender : ICoreWebView2CompositionController;
+                                                        const args   : ICoreWebView2DragStartingEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnDragStartingEvent(sender, args);
+end;
+
+function TWVBrowserBase.DedicatedWorkerCreatedEventHandler_Invoke(const sender : ICoreWebView2;
+                                                                  const args   : ICoreWebView2DedicatedWorkerCreatedEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnDedicatedWorkerCreatedEvent(sender, args);
+end;
+
+function TWVBrowserBase.DedicatedWorkerDedicatedWorkerCreatedEventHandler_Invoke(const sender    : ICoreWebView2DedicatedWorker;
+                                                                                 const args      : ICoreWebView2DedicatedWorkerCreatedEventArgs;
+                                                                                       aWorkerID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnDedicatedWorkerCreatedEvent2(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.DedicatedWorkerDestroyingEventHandler_Invoke(const sender             : ICoreWebView2DedicatedWorker;
+                                                                     const args               : IUnknown;
+                                                                           aWorkerID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnDedicatedWorkerDestroyingEvent(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.DedicatedWorkerWebMessageReceivedEventHandler_Invoke(const sender    : ICoreWebView2DedicatedWorker;
+                                                                             const args      : ICoreWebView2WebMessageReceivedEventArgs;
+                                                                                   aWorkerID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnDedicatedWorkerWebMessageReceivedEvent(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.FrameDedicatedWorkerCreatedEventHandler_Invoke(const sender   : ICoreWebView2Frame;
+                                                                       const args     : ICoreWebView2DedicatedWorkerCreatedEventArgs;
+                                                                             aFrameID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnFrameDedicatedWorkerCreatedEvent(sender, args, aFrameID);
+end;
+
+function TWVBrowserBase.ServiceWorkerDestroyingEventHandler_Invoke(const sender    : ICoreWebView2ServiceWorker;
+                                                                   const args      : IUnknown;
+                                                                         aWorkerID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnServiceWorkerDestroyingEvent(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.ServiceWorkerWebMessageReceivedEventHandler_Invoke(const sender    : ICoreWebView2ServiceWorker;
+                                                                           const args      : ICoreWebView2WebMessageReceivedEventArgs;
+                                                                                 aWorkerID : cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnServiceWorkerWebMessageReceivedEvent(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.ServiceWorkerRegisteredEventHandler_Invoke(const sender : ICoreWebView2ServiceWorkerManager;
+                                                                   const args   : ICoreWebView2ServiceWorkerRegisteredEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnServiceWorkerRegisteredEvent(sender, args);
+end;
+
+function TWVBrowserBase.GetServiceWorkerRegistrationsCompletedHandler_Invoke(      errorCode : HResult;
+                                                                             const result_   : ICoreWebView2ServiceWorkerRegistrationCollectionView): HRESULT;
+begin
+  Result := S_OK;
+  doOnGetServiceWorkerRegistrationsCompletedEvent(errorCode, result_);
+end;
+
+function TWVBrowserBase.ServiceWorkerActivatedEventHandler_Invoke(const sender : ICoreWebView2ServiceWorkerRegistration;
+                                                                  const args   : ICoreWebView2ServiceWorkerActivatedEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnServiceWorkerActivatedEvent(sender, args);
+end;
+
+function TWVBrowserBase.ServiceWorkerRegistrationUnregisteringEventHandler_Invoke(const sender : ICoreWebView2ServiceWorkerRegistration;
+                                                                                  const args   : IUnknown): HRESULT;
+begin
+  Result := S_OK;
+  doOnServiceWorkerRegistrationUnregisteringEvent(sender, args);
+end;
+
+function TWVBrowserBase.SharedWorkerCreatedEventHandler_Invoke(const sender : ICoreWebView2SharedWorkerManager;
+                                                               const args   : ICoreWebView2SharedWorkerCreatedEventArgs): HRESULT;
+begin
+  Result := S_OK;
+  doOnSharedWorkerCreatedEvent(sender, args);
+end;
+
+function TWVBrowserBase.GetSharedWorkersCompletedHandler_Invoke(      errorCode : HResult;
+                                                                const result_   : ICoreWebView2SharedWorkerCollectionView): HRESULT;
+begin
+  Result := S_OK;
+  doOnGetSharedWorkersCompletedEvent(errorCode, result_);
+end;
+
+function TWVBrowserBase.SharedWorkerDestroyingEventHandler_Invoke(const sender: ICoreWebView2SharedWorker; const args: IUnknown; aWorkerID: cardinal): HRESULT;
+begin
+  Result := S_OK;
+  doOnSharedWorkerDestroyingEvent(sender, args, aWorkerID);
+end;
+
+function TWVBrowserBase.ExecuteScriptCompletedHandler_Invoke(errorCode    : HRESULT;
+                                                             result_      : PWideChar;
+                                                             aExecutionID : integer): HRESULT;
 begin
   Result := S_OK;
 
   case aExecutionID of
     WEBVIEW4DELPHI_JS_RETRIEVEHTMLJOB_ID :
-      doOnRetrieveHTMLCompleted(errorCode, wvstring(resultObjectAsJson));
+      doOnRetrieveHTMLCompleted(errorCode, wvstring(result_));
 
     WEBVIEW4DELPHI_JS_RETRIEVETEXTJOB_ID :
-      doOnRetrieveTextCompleted(errorCode, wvstring(resultObjectAsJson));
+      doOnRetrieveTextCompleted(errorCode, wvstring(result_));
 
     else
-      doOnExecuteScriptCompleted(errorCode, wvstring(resultObjectAsJson), aExecutionID);
+      doOnExecuteScriptCompleted(errorCode, wvstring(result_), aExecutionID);
   end;
 end;
 
@@ -5312,19 +6460,22 @@ var
   TempOptionsIntf : ICoreWebView2ControllerOptions;
   TempOldWinVer   : boolean;
 begin
-  Result        := False;
-  TempOldWinVer := False;
-  TempHResult   := S_OK;
+  Result          := False;
+  TempOldWinVer   := False;
+  TempHResult     := S_OK;
+  TempOptionsIntf := nil;
 
   if (Win32MajorVersion < 10) then
     TempOldWinVer := True
    else
     if FCoreWebView2Environment.CreateCoreWebView2ControllerOptions(TempOptionsIntf, TempHResult) then
       try
-        TempOptions                        := TCoreWebView2ControllerOptions.Create(TempOptionsIntf);
-        TempOptions.ProfileName            := FProfileName;
-        TempOptions.IsInPrivateModeEnabled := FIsInPrivateModeEnabled;
-        TempOptions.ScriptLocale           := FScriptLocale;
+        TempOptions                          := TCoreWebView2ControllerOptions.Create(TempOptionsIntf);
+        TempOptions.ProfileName              := FProfileName;
+        TempOptions.IsInPrivateModeEnabled   := FIsInPrivateModeEnabled;
+        TempOptions.ScriptLocale             := FScriptLocale;
+        TempOptions.DefaultBackgroundColor   := FDefaultBackgroundColor;
+        TempOptions.AllowHostInputProcessing := FAllowHostInputProcessing;
 
         Result := FCoreWebView2Environment.CreateCoreWebView2CompositionControllerWithOptions(FWindowParentHandle,
                                                                                               TempOptions.BaseIntf,
@@ -5385,14 +6536,18 @@ var
   TempOptions     : TCoreWebView2ControllerOptions;
   TempOptionsIntf : ICoreWebView2ControllerOptions;
 begin
-  Result := False;
+  Result          := False;    
+  TempHResult     := S_OK;
+  TempOptionsIntf := nil;
 
   if FCoreWebView2Environment.CreateCoreWebView2ControllerOptions(TempOptionsIntf, TempHResult) then
     try
-      TempOptions                        := TCoreWebView2ControllerOptions.Create(TempOptionsIntf);
-      TempOptions.ProfileName            := FProfileName;
-      TempOptions.IsInPrivateModeEnabled := FIsInPrivateModeEnabled;
-      TempOptions.ScriptLocale           := FScriptLocale;
+      TempOptions                          := TCoreWebView2ControllerOptions.Create(TempOptionsIntf);
+      TempOptions.ProfileName              := FProfileName;
+      TempOptions.IsInPrivateModeEnabled   := FIsInPrivateModeEnabled;
+      TempOptions.ScriptLocale             := FScriptLocale;
+      TempOptions.DefaultBackgroundColor   := FDefaultBackgroundColor;
+      TempOptions.AllowHostInputProcessing := FAllowHostInputProcessing;
 
       Result := FCoreWebView2Environment.CreateCoreWebView2ControllerWithOptions(FWindowParentHandle,
                                                                                  TempOptions.BaseIntf,
@@ -5720,11 +6875,7 @@ begin
   if Initialized then
     Result := FCoreWebView2Controller.DefaultBackgroundColor
    else
-    {$IFDEF DELPHI16_UP}
-    Result := TColors.SysNone;  // clNone
-    {$ELSE}
-    Result := clNone;
-    {$ENDIF}
+    Result := FDefaultBackgroundColor;
 end;
 
 function TWVBrowserBase.GetRasterizationScale : double;
@@ -5843,6 +6994,29 @@ begin
     Result := FCoreWebView2.FrameId
    else
     Result := WEBVIEW4DELPHI_INVALID_FRAMEID;
+end;
+
+function TWVBrowserBase.GetAreWebViewScriptApisEnabledForServiceWorkers : boolean;
+begin
+  Result := Initialized and
+            assigned(FCoreWebView2Profile) and
+            FCoreWebView2Profile.AreWebViewScriptApisEnabledForServiceWorkers;
+end;
+
+function TWVBrowserBase.GetServiceWorkerManager : ICoreWebView2ServiceWorkerManager;
+begin
+  if Initialized and assigned(FCoreWebView2Profile) then
+    Result := FCoreWebView2Profile.ServiceWorkerManager
+   else
+    Result := nil;
+end;
+
+function TWVBrowserBase.GetSharedWorkerManager : ICoreWebView2SharedWorkerManager;
+begin
+  if Initialized and assigned(FCoreWebView2Profile) then
+    Result := FCoreWebView2Profile.SharedWorkerManager
+   else
+    Result := nil;
 end;
 
 function TWVBrowserBase.GetScreenScale : single;
@@ -5987,6 +7161,8 @@ end;
 
 procedure TWVBrowserBase.SetDefaultBackgroundColor(const aValue : TColor);
 begin
+  FDefaultBackgroundColor := aValue;
+
   if Initialized then
     FCoreWebView2Controller.DefaultBackgroundColor := aValue;
 end;
@@ -6210,6 +7386,72 @@ begin
             FCoreWebView2Environment.GetProcessExtendedInfos(self);
 end;
 
+function TWVBrowserBase.ShowSaveAsUI : boolean;
+begin
+  Result := Initialized and
+            FCoreWebView2.ShowSaveAsUI(self);
+end;
+
+function TWVBrowserBase.FindStart(const aFindTerm : wvstring) : boolean;
+var
+  TempHandler : ICoreWebView2FindStartCompletedHandler;
+begin
+  Result := False;
+
+  if Initialized and assigned(FCoreWebView2FindOptions) then
+    try
+      FCoreWebView2FindOptions.FindTerm := aFindTerm;
+
+      TempHandler := TCoreWebView2FindStartCompletedHandler.Create(self);
+
+      DestroyFind;
+      FCoreWebView2Find := TCoreWebView2Find.Create(FCoreWebView2.Find);
+      FCoreWebView2Find.AddAllBrowserEvents(self);
+      Result := FCoreWebView2Find.Start(FCoreWebView2FindOptions.BaseIntf, TempHandler);
+    finally
+      TempHandler := nil;
+    end;
+end;
+
+function TWVBrowserBase.FindNext : boolean;
+begin
+  Result := False;
+
+  if Initialized then
+    begin
+      DestroyFind;
+      FCoreWebView2Find := TCoreWebView2Find.Create(FCoreWebView2.Find);
+      FCoreWebView2Find.AddAllBrowserEvents(self);
+      Result := FCoreWebView2Find.FindNext;
+    end;
+end;
+
+function TWVBrowserBase.FindPrevious : boolean;
+begin
+  Result := False;
+
+  if Initialized then
+    begin
+      DestroyFind;
+      FCoreWebView2Find := TCoreWebView2Find.Create(FCoreWebView2.Find);
+      FCoreWebView2Find.AddAllBrowserEvents(self);
+      Result := FCoreWebView2Find.FindPrevious;
+    end;
+end;
+
+function TWVBrowserBase.FindStop : boolean;
+begin
+  Result := False;
+
+  if Initialized then
+    begin
+      DestroyFind;
+      FCoreWebView2Find := TCoreWebView2Find.Create(FCoreWebView2.Find);
+      FCoreWebView2Find.AddAllBrowserEvents(self);
+      Result := FCoreWebView2Find.Stop;
+    end;
+end;
+
 function TWVBrowserBase.TrySuspend : boolean;
 var
   TempHandler : ICoreWebView2TrySuspendCompletedHandler;
@@ -6255,9 +7497,12 @@ begin
   Result := ExecuteScript('encodeURIComponent(document.documentElement.outerHTML);', WEBVIEW4DELPHI_JS_RETRIEVEHTMLJOB_ID);
 end;
 
-function TWVBrowserBase.RetrieveText : boolean;
+function TWVBrowserBase.RetrieveText(aVisibleTextOnly: boolean) : boolean;
 begin
-  Result := ExecuteScript('encodeURIComponent(document.body.textContent);', WEBVIEW4DELPHI_JS_RETRIEVETEXTJOB_ID);
+  if aVisibleTextOnly then
+    Result := ExecuteScript('encodeURIComponent(document.body.innerText);', WEBVIEW4DELPHI_JS_RETRIEVETEXTJOB_ID)
+   else
+    Result := ExecuteScript('encodeURIComponent(document.body.textContent);', WEBVIEW4DELPHI_JS_RETRIEVETEXTJOB_ID);
 end;
 
 function TWVBrowserBase.RetrieveMHTML : boolean;
@@ -6519,7 +7764,6 @@ begin
   TempParams := '{"origin": "' + aOrigin + '", ';
 
   case aStorageTypes of
-    cdstAppCache        : TempParams := TempParams + '"storageTypes": "appcache"}';
     cdstCookies         : TempParams := TempParams + '"storageTypes": "cookies"}';
     cdstFileSystems     : TempParams := TempParams + '"storageTypes": "file_systems"}';
     cdstIndexeddb       : TempParams := TempParams + '"storageTypes": "indexeddb"}';
@@ -6528,6 +7772,10 @@ begin
     cdstWebsql          : TempParams := TempParams + '"storageTypes": "websql"}';
     cdstServiceWorkers  : TempParams := TempParams + '"storageTypes": "service_workers"}';
     cdstCacheStorage    : TempParams := TempParams + '"storageTypes": "cache_storage"}';
+    cdstInterestGroups  : TempParams := TempParams + '"storageTypes": "interest_groups"}';
+    cdstSharedStorage   : TempParams := TempParams + '"storageTypes": "shared_storage"}';
+    cdstStorageBuckets  : TempParams := TempParams + '"storageTypes": "storage_buckets"}';
+    cdstOther           : TempParams := TempParams + '"storageTypes": "other"}';
     else                  TempParams := TempParams + '"storageTypes": "all"}';
   end;
 
@@ -6922,22 +8170,22 @@ begin
     FOnDOMContentLoaded(self, sender, args);
 end;
 
-procedure TWVBrowserBase.doOnWebResourceResponseViewGetContentCompletedEvent(errorCode: HResult; const Content: IStream; aResourceID : integer);
+procedure TWVBrowserBase.doOnWebResourceResponseViewGetContentCompletedEvent(errorCode: HResult; const result_: IStream; aResourceID : integer);
 begin
   if assigned(FOnWebResourceResponseViewGetContentCompleted) then
-    FOnWebResourceResponseViewGetContentCompleted(self, errorCode, Content, aResourceID);
+    FOnWebResourceResponseViewGetContentCompleted(self, errorCode, result_, aResourceID);
 end;
 
-procedure TWVBrowserBase.doOnGetCookiesCompletedEvent(aResult : HResult; const aCookieList : ICoreWebView2CookieList);
+procedure TWVBrowserBase.doOnGetCookiesCompletedEvent(errorCode: HResult; const result_ : ICoreWebView2CookieList);
 begin
   if assigned(FOnGetCookiesCompleted) then
-    FOnGetCookiesCompleted(self, aResult, aCookieList);
+    FOnGetCookiesCompleted(self, errorCode, result_);
 end;
 
-procedure TWVBrowserBase.doOnTrySuspendCompletedEvent(errorCode: HResult; isSuccessful: Integer);
+procedure TWVBrowserBase.doOnTrySuspendCompletedEvent(errorCode: HResult; result_: Integer);
 begin
   if assigned(FOnTrySuspendCompleted) then
-    FOnTrySuspendCompleted(self, errorCode, (isSuccessful <> 0));
+    FOnTrySuspendCompleted(self, errorCode, (result_ <> 0));
 end;
 
 procedure TWVBrowserBase.doOnFrameCreatedEvent(const sender: ICoreWebView2; const args: ICoreWebView2FrameCreatedEventArgs);
@@ -6958,10 +8206,10 @@ begin
     FOnClientCertificateRequested(self, sender, args);
 end;
 
-procedure TWVBrowserBase.doOnPrintToPdfCompletedEvent(errorCode: HResult; isSuccessful: Integer);
+procedure TWVBrowserBase.doOnPrintToPdfCompletedEvent(errorCode: HResult; result_: Integer);
 begin
   if assigned(FOnPrintToPdfCompleted) then
-    FOnPrintToPdfCompleted(self, errorCode, (isSuccessful <> 0));
+    FOnPrintToPdfCompleted(self, errorCode, (result_ <> 0));
 end;
 
 procedure TWVBrowserBase.doOnBytesReceivedChangedEventEvent(const sender: ICoreWebView2DownloadOperation; const args: IUnknown; aDownloadID : integer);
@@ -6994,16 +8242,45 @@ begin
     FOnFrameDestroyed(self, sender, aFrameID);
 end;
 
-procedure TWVBrowserBase.doOnCallDevToolsProtocolMethodCompletedEvent(aErrorCode: HRESULT; const aReturnObjectAsJson: wvstring; aExecutionID : integer);
+procedure TWVBrowserBase.doOnCallDevToolsProtocolMethodCompletedEvent(aErrorCode: HRESULT; const aResult: wvstring; aExecutionID : integer);
 begin
   if assigned(FOnCallDevToolsProtocolMethodCompleted) then
-    FOnCallDevToolsProtocolMethodCompleted(self, aErrorCode, aReturnObjectAsJson, aExecutionID);
+    FOnCallDevToolsProtocolMethodCompleted(self, aErrorCode, aResult, aExecutionID);
 end;
 
-procedure TWVBrowserBase.doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(aErrorCode: HRESULT; const aID : wvstring);
+procedure TWVBrowserBase.doOnAddScriptToExecuteOnDocumentCreatedCompletedEvent(aErrorCode: HRESULT; const aResult : wvstring);
 begin
   if assigned(FOnAddScriptToExecuteOnDocumentCreatedCompleted) then
-    FOnAddScriptToExecuteOnDocumentCreatedCompleted(self, aErrorCode, aID);
+    FOnAddScriptToExecuteOnDocumentCreatedCompleted(self, aErrorCode, aResult);
+end;
+
+procedure TWVBrowserBase.CalculateZoomStep;
+var
+  TempPct, TempDelta, TempBest : double;
+  i, TempStep : integer;
+begin
+  TempPct  := ZoomPct;
+  TempStep := ZOOM_STEP_DEF;
+  TempBest := 10000;
+  i        := ZOOM_STEP_MIN;
+
+  while (i <= ZOOM_STEP_MAX) do
+    begin
+      TempDelta := abs(ZoomStepValues[i] - TempPCt);
+
+      if (TempBest > TempDelta) then
+        begin
+          TempBest := TempDelta;
+          TempStep := i;
+        end
+       else
+        if (TempBest < TempDelta) then
+          break;
+
+      inc(i);
+    end;
+
+  FZoomStep := TempStep;
 end;
 
 procedure TWVBrowserBase.UpdateZoomStep(aInc : boolean);
@@ -7025,10 +8302,10 @@ begin
         end
        else
         if (FZoomStep > ZOOM_STEP_MIN) then
-        begin
-          dec(FZoomStep);
-          UpdateZoomPct(ZoomStepValues[FZoomStep]);
-        end;
+          begin
+            dec(FZoomStep);
+            UpdateZoomPct(ZoomStepValues[FZoomStep]);
+          end;
     end
    else
     begin
@@ -7112,10 +8389,10 @@ begin
   end;
 
   if (modifiers <> 0) then
-    TempParams := TempParams + ', "modifiers": ' + inttostr(modifiers);
+    TempParams := TempParams + ', "modifiers": ' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(modifiers){$IFDEF FPC}){$ENDIF};
 
   if (timestamp <> 0) then
-    TempParams := TempParams + ', "timestamp": ' + inttostr(timestamp);
+    TempParams := TempParams + ', "timestamp": ' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(timestamp){$IFDEF FPC}){$ENDIF};
 
   if (length(text) > 0) then
     TempParams := TempParams + ', "text": "' + JSONEscape(text) + '"';
@@ -7133,10 +8410,10 @@ begin
     TempParams := TempParams + ', "key": "' + JSONEscape(key) + '"';
 
   if (windowsVirtualKeyCode <> 0) then
-    TempParams := TempParams + ', "windowsVirtualKeyCode": ' + inttostr(windowsVirtualKeyCode);
+    TempParams := TempParams + ', "windowsVirtualKeyCode": ' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(windowsVirtualKeyCode){$IFDEF FPC}){$ENDIF};
 
   if (nativeVirtualKeyCode <> 0) then
-    TempParams := TempParams + ', "nativeVirtualKeyCode": ' + inttostr(nativeVirtualKeyCode);
+    TempParams := TempParams + ', "nativeVirtualKeyCode": ' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(nativeVirtualKeyCode){$IFDEF FPC}){$ENDIF};
 
   if autoRepeat then
     TempParams := TempParams + ', "autoRepeat": true';
@@ -7148,7 +8425,7 @@ begin
     TempParams := TempParams + ', "isSystemKey": true';
 
   if (location <> 0) then
-    TempParams := TempParams + ', "location": ' + inttostr(location);
+    TempParams := TempParams + ', "location": ' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(location){$IFDEF FPC}){$ENDIF};
 
   TempParams := TempParams + '}';
 
@@ -7181,11 +8458,20 @@ begin
   Result := FUseCompositionController and
             Initialized and
             FCoreWebView2CompositionController.SendPointerInput(aEventKind, aPointerInfo);
+end;       
+
+function TWVBrowserBase.DragLeave : HResult;
+begin
+  Result := S_OK;
+
+  if FUseCompositionController and Initialized then
+    Result := FCoreWebView2CompositionController.DragLeave;
 end;
 
+{$WARN SYMBOL_DEPRECATED OFF}
 function TWVBrowserBase.DragEnter(const dataObject: IDataObject; keyState: LongWord; point: TPoint; out effect: LongWord) : HResult;
 var
-  TempPoint : tagPoint;
+  TempPoint : tagPoint; // ICoreWebView2CompositionController3 uses tagPoint. We ignore the warning.
 begin
   Result := S_OK;
   effect := DROPEFFECT_NONE;
@@ -7197,17 +8483,9 @@ begin
     Result := FCoreWebView2CompositionController.DragEnter(dataObject, keyState, TempPoint, effect);
 end;
 
-function TWVBrowserBase.DragLeave : HResult;
-begin
-  Result := S_OK;
-
-  if FUseCompositionController and Initialized then
-    Result := FCoreWebView2CompositionController.DragLeave;
-end;
-
 function TWVBrowserBase.DragOver(keyState: LongWord; point: TPoint; out effect: LongWord) : HResult;
 var
-  TempPoint : tagPoint;
+  TempPoint : tagPoint; // ICoreWebView2CompositionController3 uses tagPoint. We ignore the warning.
 begin
   Result := S_OK;
   effect := DROPEFFECT_NONE;
@@ -7221,7 +8499,7 @@ end;
 
 function TWVBrowserBase.Drop(const dataObject: IDataObject; keyState: LongWord; point: TPoint; out effect: LongWord) : HResult;
 var
-  TempPoint : tagPoint;
+  TempPoint : tagPoint; // ICoreWebView2CompositionController3 uses tagPoint. We ignore the warning.
 begin
   Result := S_OK;
   effect := DROPEFFECT_NONE;
@@ -7233,6 +8511,7 @@ begin
       Result      := FCoreWebView2CompositionController.Drop(dataObject, keyState, TempPoint, effect);
     end;
 end;
+{$WARN SYMBOL_DEPRECATED ON}
 
 function TWVBrowserBase.GetNonClientRegionAtPoint(point: TPoint) : TWVNonClientRegionKind;
 begin
@@ -7410,6 +8689,12 @@ procedure TWVBrowserBase.SetMemoryUsageTargetLevel(aValue : TWVMemoryUsageTarget
 begin
   if Initialized then
     FCoreWebView2.MemoryUsageTargetLevel := aValue;
+end;
+
+procedure TWVBrowserBase.SetAreWebViewScriptApisEnabledForServiceWorkers(aValue : boolean);
+begin
+  if Initialized and assigned(FCoreWebView2Profile) then
+    FCoreWebView2Profile.AreWebViewScriptApisEnabledForServiceWorkers := aValue;
 end;
 
 function TWVBrowserBase.CreateSharedBuffer(aSize : Largeuint; var aSharedBuffer : ICoreWebView2SharedBuffer) : boolean;

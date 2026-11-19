@@ -157,7 +157,10 @@ begin
   if (FBrowser <> nil) then
     TempScale := FBrowser.ScreenScale
    else
-    TempScale := GlobalWebView2Loader.DeviceScaleFactor;
+    if (GlobalWebView2Loader <> nil) then
+      TempScale := GlobalWebView2Loader.DeviceScaleFactor
+     else
+      TempScale := 1;
 
   TempClientRect  := ClientRect;
   TempRect.Left   := round(TempClientRect.Left);
@@ -201,7 +204,7 @@ begin
 
       if (TempChildHandle <> 0) and (TempParentHandle <> 0) then
         begin
-          SetWindowLong(TempChildHandle, GWL_STYLE, WS_CHILDWINDOW);
+          SetWindowLongPtr(TempChildHandle, GWL_STYLE, WS_CHILDWINDOW);
           WinApi.Windows.SetParent(TempChildHandle, TempParentHandle);
         end;
     end;

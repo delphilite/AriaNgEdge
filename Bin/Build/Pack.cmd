@@ -1,9 +1,9 @@
 del /q AriaNgEdge-Win32.7z
-7za a AriaNgEdge-Win32.7z ..\Win32\AriaNg.exe
+7za a AriaNgEdge-Win32.7z ..\Win32\AriaNg.exe ..\Win32\WebView2Loader.dll
 IF NOT EXIST AriaNgEdge-Win32.7z goto Error1
 
 del /q AriaNgEdge-Win64.7z
-7za a AriaNgEdge-Win64.7z ..\Win64\AriaNg.exe
+7za a AriaNgEdge-Win64.7z ..\Win64\AriaNg.exe ..\Win64\WebView2Loader.dll
 IF NOT EXIST AriaNgEdge-Win64.7z goto Error1
 
 goto End

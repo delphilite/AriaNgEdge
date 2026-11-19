@@ -8,9 +8,9 @@ interface
 
 uses
   {$IFDEF DELPHI16_UP}
-  WinApi.Windows, System.Classes, System.SysUtils, WinApi.ActiveX, System.Win.Registry, Winapi.ShlObj, System.Math,
+  WinApi.Windows, System.Classes, System.SysUtils, WinApi.ActiveX, System.Win.Registry, Winapi.ShlObj, System.Math, System.SyncObjs,
   {$ELSE}
-  Windows, Classes, SysUtils, ActiveX, Registry, ShlObj, Math, Dialogs,
+  Windows, Classes, SysUtils, ActiveX, Registry, ShlObj, Math, Dialogs, SyncObjs,
   {$ENDIF}
   uWVLibFunctions, uWVInterfaces, uWVTypeLibrary, uWVTypes, uWVEvents, uWVCoreWebView2Environment;
 
@@ -29,6 +29,7 @@ type
       FOnProcessInfosChanged                  : TLoaderProcessInfosChangedEvent;
       FOnGetCustomSchemes                     : TLoaderGetCustomSchemesEvent;
       FLibHandle                              : THandle;
+      FSyncObj                                : TCriticalSection;
       FErrorLog                               : TStringList;
       FError                                  : int64;
       FBrowserExecPath                        : wvstring;
@@ -38,12 +39,14 @@ type
       FCheckFiles                             : boolean;
       FShowMessageDlg                         : boolean;
       FInitCOMLibrary                         : boolean;
+      FLocalCOMInitMade                       : boolean;
       FDeviceScaleFactor                      : single;
       FForcedDeviceScaleFactor                : single;
       FReRaiseExceptions                      : boolean;
       FLoaderDllPath                          : wvstring;
       FUseInternalLoader                      : boolean;
       FAllowOldRuntime                        : boolean;
+      FWorkerIDGen                  : cardinal;
 
       // Fields used to create the environment
       FAdditionalBrowserArguments             : wvstring;
@@ -88,9 +91,13 @@ type
       FDisableEdgePitchNotification           : boolean;
       FTreatInsecureOriginAsSecure            : wvstring;
       FOpenOfficeDocumentsInWebViewer         : boolean;
+      FMicrosoftSignIn                        : boolean;
+      FPostQuantumKyber                       : TWVState;
+      FUserAgent                              : wvstring;
 
       FAutoAcceptCamAndMicCapture             : boolean;
 
+      function  GetInternalAvailableBrowserVersion : wvstring;
       function  GetAvailableBrowserVersion : wvstring;
       function  GetAvailableBrowserVersionWithOptions : wvstring;
       function  GetInitialized : boolean;
@@ -109,6 +116,8 @@ type
       function  CreateEnvironment : boolean;
       procedure DestroyEnvironment;
 
+      function  Lock: boolean;
+      procedure UnLock;
       function  GetFileVersion(const aFile : wvstring; var aVersionInfo : TFileVersionInfo) : boolean;
       function  GetExtendedFileVersion(const aFileName : wvstring) : uint64;
       function  LoadLibProcedures : boolean;
@@ -133,7 +142,7 @@ type
       procedure doProcessInfosChangedEvent(const sender: ICoreWebView2Environment); virtual;
       procedure doOnGetCustomSchemes(var aSchemeRegistrations : TWVCustomSchemeRegistrationArray); virtual;
 
-      function  EnvironmentCompletedHandler_Invoke(errorCode: HResult; const createdEnvironment: ICoreWebView2Environment): HRESULT;
+      function  EnvironmentCompletedHandler_Invoke(errorCode: HResult; const result_: ICoreWebView2Environment): HRESULT;
       function  NewBrowserVersionAvailableEventHandler_Invoke(const sender: ICoreWebView2Environment; const args: IUnknown): HRESULT;
       function  BrowserProcessExitedEventHandler_Invoke(const sender: ICoreWebView2Environment; const args: ICoreWebView2BrowserProcessExitedEventArgs): HRESULT;
       function  ProcessInfosChangedEventHandler_Invoke(const sender: ICoreWebView2Environment; const args: IUnknown): HRESULT;
@@ -177,6 +186,10 @@ type
       /// Append aText to the ErrorMessage property.
       /// </summary>
       procedure   AppendErrorLog(const aText : wvstring);
+      /// <summary>
+      /// Custom ID generator for the web workers.
+      /// </summary>
+      function    NextWorkerID: cardinal;
 
       /// <summary>
       /// Represents the global WebView2 Environment.
@@ -460,6 +473,7 @@ type
       /// </summary>
       /// <remarks>
       /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --enable-features</see></para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags">See the WebView2 browser flags article.</see></para>
       /// <para>The list of features you can enable is here:</para>
       /// <para>https://chromium.googlesource.com/chromium/src/+/master/chrome/common/chrome_features.cc</para>
       /// <para>https://source.chromium.org/chromium/chromium/src/+/main:content/public/common/content_features.cc</para>
@@ -605,6 +619,9 @@ type
       /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-bypass-list</see></para>
       /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-pac-url</see></para>
       /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-server</see></para>
+      /// <para><see href="https://www.chromium.org/developers/design-documents/network-settings/">See the Network Settings article.</see></para>
+      /// <para><see href="https://github.com/chromium/chromium/blob/main/net/docs/proxy.md"/">See the Proxy Support article.</see></para>
+      /// <para><see href="https://developer.chrome.com/docs/extensions/reference/api/proxy">See the chrome.proxy API article.</see></para>
       /// </remarks>
       property ProxySettings                          : TWVProxySettings                   read FProxySettings;
       /// <summary>
@@ -695,6 +712,25 @@ type
       /// <para>This is a workaround given by Microsoft to open MS Office documents in the web browser instead of downloading the files.</para>
       /// </summary>
       property OpenOfficeDocumentsInWebViewer         : boolean                            read FOpenOfficeDocumentsInWebViewer          write FOpenOfficeDocumentsInWebViewer;
+      /// <summary>
+      /// If enabled, allows implicit sign-in to Microsoft webpages using any account, by using the information from the primary OS account.
+      /// </summary>
+      /// <remarks>
+      /// <para>This property uses the msSingleSignOnOSForPrimaryAccountIsShared flag.</para>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/webview-features-flags">See the WebView2 browser flags article.</see></para>
+      /// </remarks>
+      property MicrosoftSignIn                        : boolean                            read FMicrosoftSignIn                         write FMicrosoftSignIn;
+      /// <summary>
+      /// This option enables a combination of X25519 and Kyber in TLS 1.3.
+      /// </summary>
+      property TLS13HybridizedKyberSupport            : TWVState                           read FPostQuantumKyber                        write FPostQuantumKyber;
+      /// <summary>
+      /// A string used to override the default user agent with a custom one.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --user-agent</see></para>
+      /// </remarks>
+      property UserAgent                              : wvstring                           read FUserAgent                               write FUserAgent;
       /// <summary>
       /// Bypasses the dialog prompting the user for permission to capture cameras and microphones.
       /// Useful in automatic tests of video-conferencing Web applications. This is nearly
@@ -801,6 +837,9 @@ type
   /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-bypass-list</see></para>
   /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-pac-url</see></para>
   /// <para><see href="https://peter.sh/experiments/chromium-command-line-switches/">Uses the following command line switch: --proxy-server</see></para>
+  /// <para><see href="https://www.chromium.org/developers/design-documents/network-settings/">See the Network Settings article.</see></para>
+  /// <para><see href="https://github.com/chromium/chromium/blob/main/net/docs/proxy.md"/">See the Proxy Support article.</see></para>
+  /// <para><see href="https://developer.chrome.com/docs/extensions/reference/api/proxy">See the chrome.proxy API article.</see></para>
   /// </remarks>
   TWVProxySettings = class
     protected
@@ -858,6 +897,8 @@ begin
   FOnBrowserProcessExited                 := nil;
   FOnGetCustomSchemes                     := nil;
   FStatus                                 := wvlsCreated;
+  FSyncObj                                := nil;
+  FWorkerIDGen                  := 0;
   FLibHandle                              := 0;
   FError                                  := 0;
   FBrowserExecPath                        := '';
@@ -866,6 +907,7 @@ begin
   FCheckFiles                             := True;
   FShowMessageDlg                         := True;
   FInitCOMLibrary                         := {$IFDEF DELPHI16_UP}False{$ELSE}True{$ENDIF};
+  FLocalCOMInitMade                       := False;
   FForcedDeviceScaleFactor                := 0;
   FReRaiseExceptions                      := False;
   FLoaderDllPath                          := '';
@@ -920,6 +962,9 @@ begin
   FTreatInsecureOriginAsSecure            := '';
   FOpenOfficeDocumentsInWebViewer         := False;
   FAutoAcceptCamAndMicCapture             := False;
+  FMicrosoftSignIn                        := False;
+  FPostQuantumKyber                       := STATE_DEFAULT;
+  FUserAgent                              := '';
   FProxySettings                          := nil;
   FErrorLog                               := nil;
 
@@ -932,7 +977,7 @@ begin
     DestroyEnvironment;
     UnLoadWebView2Library;
 
-    if FInitCOMLibrary then
+    if FLocalCOMInitMade then
       CoUnInitialize;
 
     if assigned(FProxySettings) then
@@ -940,6 +985,9 @@ begin
 
     if assigned(FErrorLog) then
       FreeAndNil(FErrorLog);
+
+    if assigned(FSyncObj) then
+      FreeAndNil(FSyncObj);
   finally
     inherited Destroy;
   end;
@@ -1023,6 +1071,7 @@ var
 begin
   Result     := 0;
   TempBuffer := nil;
+  TempInfo   := nil;
   TempHandle := 0;
   TempLen    := 0;
 
@@ -1078,6 +1127,23 @@ begin
     on e : exception do
       if CustomExceptionHandler('TWVLoader.GetFileVersion', e) then raise;
   end;
+end;
+
+function TWVLoader.Lock: boolean;
+begin
+  if assigned(FSyncObj) then
+    begin
+      FSyncObj.Acquire;
+      Result := True;
+    end
+   else
+    Result := False;
+end;
+
+procedure TWVLoader.UnLock;
+begin
+  if assigned(FSyncObj) then
+    FSyncObj.Release;
 end;
 
 function TWVLoader.LoadWebView2Library : boolean;
@@ -1234,7 +1300,8 @@ begin
   if (length(FBrowserExecPath) = 0) then
     begin
       if (length(InstalledRuntimeVersion) > 0) or
-         SearchInstalledProgram('WebView2 Runtime', 'Microsoft Corporation') then
+         SearchInstalledProgram('WebView2 Runtime', 'Microsoft Corporation') or
+         (length(GetInternalAvailableBrowserVersion) > 0) then
         Result := True
        else
         begin
@@ -1331,7 +1398,9 @@ begin
                       WEBVIEW2LOADERLIB_VERSION_RELEASE,
                       WEBVIEW2LOADERLIB_VERSION_BUILD) then
     begin
-      if GetDLLHeaderMachine(TempLoaderLibPath, TempMachine) then
+      TempMachine := 0;
+
+      if GetDLLHeaderMachine({$IFDEF FPC}UTF8Encode({$ENDIF}TempLoaderLibPath{$IFDEF FPC}){$ENDIF}, TempMachine) then
         case TempMachine of
           WV2_IMAGE_FILE_MACHINE_I386 :
             if Is32BitProcess then
@@ -1372,17 +1441,20 @@ begin
    else
     begin
       FStatus := wvlsError;
-      AppendErrorLog('Unsupported WebView2Loader.dll version !');
 
       if GetFileVersion(TempLoaderLibPath, TempVersionInfo) then
         begin
+          AppendErrorLog('Unsupported WebView2Loader.dll version !');
           AppendErrorLog('Expected WebView2Loader.dll version : ' + LowestLoaderDLLVersion);
           AppendErrorLog('Found WebView2Loader.dll version : ' +
+                         {$IFDEF FPC}UTF8Decode({$ENDIF}
                          IntToStr(TempVersionInfo.MajorVer) + '.' +
                          IntToStr(TempVersionInfo.MinorVer) + '.' +
                          IntToStr(TempVersionInfo.Release)  + '.' +
-                         IntToStr(TempVersionInfo.Build));
-        end;
+                         IntToStr(TempVersionInfo.Build){$IFDEF FPC}){$ENDIF});
+        end
+       else
+        AppendErrorLog('WebView2Loader.dll file not found !');
 
       ShowErrorMessageDlg(ErrorMessage);
     end;
@@ -1562,6 +1634,22 @@ begin
         TempFeatures := 'msOpenOfficeDocumentsInWebViewer';
     end;
 
+  if FMicrosoftSignIn then
+    begin
+      if (length(TempFeatures) > 0) then
+        TempFeatures := TempFeatures + ',msSingleSignOnOSForPrimaryAccountIsShared'
+       else
+        TempFeatures := 'msSingleSignOnOSForPrimaryAccountIsShared';
+    end;
+
+  if (FPostQuantumKyber = STATE_ENABLED) then
+    begin
+      if (length(TempFeatures) > 0) then
+        TempFeatures := TempFeatures + ',PostQuantumKyber'
+       else
+        TempFeatures := 'PostQuantumKyber';
+    end;
+
   if (length(TempFeatures) > 0) then
     Result := Result + '--enable-features=' + TempFeatures + ' ';
 
@@ -1587,6 +1675,14 @@ begin
         TempFeatures := TempFeatures + ',msEdgeRose'
        else
         TempFeatures := 'msEdgeRose';
+    end;
+
+  if (FPostQuantumKyber = STATE_DISABLED) then
+    begin
+      if (length(TempFeatures) > 0) then
+        TempFeatures := TempFeatures + ',PostQuantumKyber'
+       else
+        TempFeatures := 'PostQuantumKyber';
     end;
 
   if (length(TempFeatures) > 0) then
@@ -1690,7 +1786,7 @@ begin
     end;
 
   if (FRemoteDebuggingPort > 0) then
-    Result := Result + '--remote-debugging-port=' + inttostr(FRemoteDebuggingPort) + ' ';
+    Result := Result + '--remote-debugging-port=' + {$IFDEF FPC}UTF8Decode({$ENDIF}inttostr(FRemoteDebuggingPort){$IFDEF FPC}){$ENDIF} + ' ';
 
   if (length(FRemoteAllowOrigins) > 0) then
     Result := Result + '--remote-allow-origins=' + FRemoteAllowOrigins + ' ';
@@ -1718,6 +1814,9 @@ begin
   // https://chromium.googlesource.com/v8/v8/+/master/src/flags/flag-definitions.h
   if (length(FJavaScriptFlags) > 0) then
     Result := Result + '--js-flags="' + FJavaScriptFlags + '" ';
+
+  if (length(FUserAgent) > 0) then
+    Result := Result + '--user-agent="' + FUserAgent + '" ';
 
   if (length(FAdditionalBrowserArguments) > 0) then
     Result := Result + FAdditionalBrowserArguments
@@ -1783,7 +1882,7 @@ end;
 function TWVLoader.GetErrorMessage : wvstring;
 begin
   if assigned(FErrorLog) then
-    Result := FErrorLog.Text
+    Result := {$IFDEF FPC}UTF8Decode({$ENDIF}FErrorLog.Text{$IFDEF FPC}){$ENDIF}
    else
     Result := '';
 end;
@@ -1935,6 +2034,21 @@ begin
     end;
 end;
 
+function TWVLoader.GetInternalAvailableBrowserVersion : wvstring;
+var
+  TempVersion : PWideChar;
+begin
+  Result      := '';
+  TempVersion := nil;
+
+  if succeeded(Internal_GetAvailableCoreWebView2BrowserVersionString(PWideChar(FBrowserExecPath), @TempVersion)) and
+     assigned(TempVersion) then
+    begin
+      Result := TempVersion;
+      CoTaskMemFree(TempVersion);
+    end;
+end;
+
 function TWVLoader.GetAvailableBrowserVersionWithOptions : wvstring;
 var
   TempVersion : PWideChar;
@@ -1992,9 +2106,26 @@ end;
 
 procedure TWVLoader.AppendErrorLog(const aText : wvstring);
 begin
-  OutputDebugMessage(aText);
+  OutputDebugMessage({$IFDEF FPC}UTF8Encode({$ENDIF}aText{$IFDEF FPC}){$ENDIF});
   if assigned(FErrorLog) then
-    FErrorLog.Add(aText);
+    FErrorLog.Add({$IFDEF FPC}UTF8Encode({$ENDIF}aText{$IFDEF FPC}){$ENDIF});
+end;
+
+function TWVLoader.NextWorkerID: cardinal;
+begin
+  Result := 0;
+
+  if Lock then
+    try
+      if (FWorkerIDGen < pred(high(cardinal))) then
+        inc(FWorkerIDGen)
+       else
+        FWorkerIDGen := 1;
+
+      Result := FWorkerIDGen;
+    finally
+      UnLock;
+    end;
 end;
 
 procedure TWVLoader.UpdateDeviceScaleFactor;
@@ -2007,8 +2138,34 @@ end;
 
 function TWVLoader.StartWebView2 : boolean;
 begin
-  if FInitCOMLibrary then
-    CoInitializeEx(nil, COINIT_APARTMENTTHREADED);
+  Result := False;
+
+  if FInitCOMLibrary and not(FLocalCOMInitMade) then
+    begin
+      case CoInitializeEx(nil, COINIT_APARTMENTTHREADED) of
+        S_OK, S_FALSE      :
+          begin
+            // To uninitialize the COM library gracefully on a thread, each
+            // successful call to CoInitialize or CoInitializeEx, including any
+            // call that returns S_FALSE, must be balanced by a corresponding
+            // call to CoUninitialize.
+            FLocalCOMInitMade := True;
+            Result            := True;
+          end;
+
+        RPC_E_CHANGED_MODE : AppendErrorLog('A previous call to CoInitializeEx specified an incompatible concurrency model for this thread.');
+        E_INVALIDARG       : AppendErrorLog('CoInitializeEx failed. One or more arguments are not valid.');
+        E_OUTOFMEMORY      : AppendErrorLog('CoInitializeEx failed to allocate necessary memory.');
+        E_UNEXPECTED       : AppendErrorLog('Unexpected CoInitializeEx failure.');
+        else                 AppendErrorLog('Unknown CoInitializeEx failure.');
+      end;
+
+      if not(Result) then
+        begin
+          ShowErrorMessageDlg(ErrorMessage);
+          exit;
+        end;
+    end;
 
   Result := CheckWV2Library            and
             LoadWebView2Library        and
@@ -2017,16 +2174,16 @@ begin
             CreateEnvironment;
 end;
 
-function TWVLoader.EnvironmentCompletedHandler_Invoke(      errorCode          : HResult;
-                                                      const createdEnvironment : ICoreWebView2Environment) : HRESULT;
+function TWVLoader.EnvironmentCompletedHandler_Invoke(      errorCode : HResult;
+                                                      const result_   : ICoreWebView2Environment) : HRESULT;
 begin
   Result := S_OK;
 
-  if succeeded(errorCode) and assigned(createdEnvironment) then
+  if succeeded(errorCode) and assigned(result_) then
     begin
       DestroyEnvironment;
 
-      FCoreWebView2Environment := TCoreWebView2Environment.Create(createdEnvironment);
+      FCoreWebView2Environment := TCoreWebView2Environment.Create(result_);
       FCoreWebView2Environment.AddAllLoaderEvents(self);
 
       FStatus := wvlsInitialized;

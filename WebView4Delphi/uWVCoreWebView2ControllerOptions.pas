@@ -7,6 +7,11 @@ unit uWVCoreWebView2ControllerOptions;
 interface
 
 uses
+  {$IFDEF DELPHI16_UP}
+  System.Classes, System.Types, System.UITypes, System.SysUtils,
+  {$ELSE}
+  Classes, Graphics, SysUtils,
+  {$ENDIF}
   uWVTypeLibrary, uWVTypes;
 
 type
@@ -21,15 +26,23 @@ type
     protected
       FBaseIntf  : ICoreWebView2ControllerOptions;
       FBaseIntf2 : ICoreWebView2ControllerOptions2;
+      FBaseIntf3 : ICoreWebView2ControllerOptions3;
+      FBaseIntf4 : ICoreWebView2ControllerOptions4;
 
-      function GetInitialized : boolean;
-      function GetProfileName : wvstring;
-      function GetIsInPrivateModeEnabled : boolean;
-      function GetScriptLocale : wvstring;
+      function  GetInitialized : boolean;
+      function  GetProfileName : wvstring;
+      function  GetIsInPrivateModeEnabled : boolean;
+      function  GetScriptLocale : wvstring;
+      function  GetDefaultBackgroundColor : TColor;
+      function  GetAllowHostInputProcessing : boolean;
 
       procedure SetProfileName(const aValue : wvstring);
       procedure SetIsInPrivateModeEnabled(aValue : boolean);
       procedure SetScriptLocale(const aValue : wvstring);
+      procedure SetDefaultBackgroundColor(const aValue : TColor);
+      procedure SetAllowHostInputProcessing(aValue : boolean);
+
+      procedure InitializeFields;
 
     public
       constructor Create(const aBaseIntf : ICoreWebView2ControllerOptions); reintroduce;
@@ -89,6 +102,46 @@ type
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controlleroptions2#get_scriptlocale">See the ICoreWebView2ControllerOptions2 article.</see></para>
       /// </remarks>
       property ScriptLocale            : wvstring                       read GetScriptLocale            write SetScriptLocale;
+      /// <summary>
+      /// <para>This property allows users to initialize the `DefaultBackgroundColor` early,
+      /// preventing a white flash that can occur while WebView2 is loading when
+      /// the background color is set to something other than white. With early
+      /// initialization, the color remains consistent from the start. After
+      /// initialization, `CoreWebView2Controller.DefaultBackgroundColor` will return the value set using this API.</para>
+      ///
+      /// <para>The `CoreWebView2Controller.DefaultBackgroundColor` can be set via the WEBVIEW2_DEFAULT_BACKGROUND_COLOR environment variable,
+      /// which will remain supported for cases where this solution is being used.
+      /// It is encouraged to transition away from the environment variable and use this API solution to
+      /// apply the property. It is important to highlight that when set, the enviroment variable overrides
+      /// ControllerOptions::DefaultBackgroundColor and becomes the initial value of Controller::DefaultBackgroundColor.</para>
+      ///
+      /// <para>The `DefaultBackgroundColor` is the color that renders underneath all web
+      /// content. This means WebView2 renders this color when there is no web
+      /// content loaded. When no background color is defined in WebView2, it uses
+      /// the `DefaultBackgroundColor` property to render the background.
+      /// By default, this color is set to white.</para>
+      ///
+      /// <para>This API only supports opaque colors and full transparency. It will
+      /// fail for colors with alpha values that don't equal 0 or 255.
+      /// When WebView2 is set to be fully transparent, it does not render a background,
+      /// allowing the content from windows behind it to be visible.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controlleroptions3#put_defaultbackgroundcolor">See the ICoreWebView2Controller3 article.</see></para>
+      /// </remarks>
+      property DefaultBackgroundColor  : TColor                         read GetDefaultBackgroundColor    write SetDefaultBackgroundColor;
+      /// <summary>
+      /// <para>`AllowHostInputProcessing` property is to enable/disable input passing through
+      /// the app before being delivered to the WebView2. This property is only applicable
+      /// to controllers created with `CoreWebView2Environment.CreateCoreWebView2ControllerAsync` and not
+      /// composition controllers created with `CoreWebView2Environment.CreateCoreWebView2CompositionControllerAsync`.
+      /// By default the value is `FALSE`.</para>
+      /// <para>Setting this property has no effect when using visual hosting.</para>
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2controlleroptions4#put_allowhostinputprocessing">See the ICoreWebView2Controller4 article.</see></para>
+      /// </remarks>
+      property AllowHostInputProcessing : boolean                       read GetAllowHostInputProcessing  write SetAllowHostInputProcessing;
   end;
 
 implementation
@@ -105,17 +158,29 @@ constructor TCoreWebView2ControllerOptions.Create(const aBaseIntf : ICoreWebView
 begin
   inherited Create;
 
+  InitializeFields;
+
   FBaseIntf := aBaseIntf;
 
-  if Initialized then
-    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ControllerOptions2, FBaseIntf2);
+  if Initialized and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ControllerOptions2, FBaseIntf2) and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ControllerOptions3, FBaseIntf3) then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2ControllerOptions4, FBaseIntf4);
 end;
 
 destructor TCoreWebView2ControllerOptions.Destroy;
 begin
-  FBaseIntf := nil;
+  InitializeFields;
 
   inherited Destroy;
+end;
+
+procedure TCoreWebView2ControllerOptions.InitializeFields;
+begin
+  FBaseIntf  := nil;
+  FBaseIntf2 := nil;
+  FBaseIntf3 := nil;
+  FBaseIntf4 := nil;
 end;
 
 function TCoreWebView2ControllerOptions.GetInitialized : boolean;
@@ -164,6 +229,30 @@ begin
     end;
 end;
 
+function TCoreWebView2ControllerOptions.GetDefaultBackgroundColor : TColor;
+var
+  TempResult : COREWEBVIEW2_COLOR;
+begin
+  if assigned(FBaseIntf3) and
+     succeeded(FBaseIntf3.Get_DefaultBackgroundColor(TempResult)) then
+    Result := CoreWebViewColorToDelphiColor(TempResult)
+   else
+    {$IFDEF DELPHI16_UP}
+    Result := TColors.SysNone;  // clNone
+    {$ELSE}
+    Result := clNone;
+    {$ENDIF}
+end;
+
+function TCoreWebView2ControllerOptions.GetAllowHostInputProcessing : boolean;
+var
+  TempResult : integer;
+begin
+  Result := assigned(FBaseIntf4) and
+            succeeded(FBaseIntf4.Get_AllowHostInputProcessing(TempResult)) and
+            (TempResult <> 0);
+end;
+
 procedure TCoreWebView2ControllerOptions.SetProfileName(const aValue : wvstring);
 begin
   if Initialized then
@@ -180,6 +269,28 @@ procedure TCoreWebView2ControllerOptions.SetScriptLocale(const aValue : wvstring
 begin
   if assigned(FBaseIntf2) then
     FBaseIntf2.Set_ScriptLocale(PWideChar(aValue));
+end;
+
+procedure TCoreWebView2ControllerOptions.SetDefaultBackgroundColor(const aValue : TColor);
+var
+  TempColor : COREWEBVIEW2_COLOR;
+begin
+  if assigned(FBaseIntf3) then
+    begin
+      TempColor := DelphiColorToCoreWebViewColor(aValue);
+
+      // The only supported alpha values are 0 (transparent) and 255 (opaque).
+      if not(TempColor.A in [0, 255]) then
+        TempColor.A := 255;
+
+      FBaseIntf3.Set_DefaultBackgroundColor(TempColor);
+    end;
+end;
+
+procedure TCoreWebView2ControllerOptions.SetAllowHostInputProcessing(aValue : boolean);
+begin
+  if assigned(FBaseIntf4) then
+    FBaseIntf4.Set_AllowHostInputProcessing(ord(aValue));
 end;
 
 end.

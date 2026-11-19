@@ -133,6 +133,33 @@ type
       property OnProfileGetBrowserExtensionsCompleted;
       property OnProfileDeleted;
       property OnExecuteScriptWithResultCompleted;
+      property OnNonClientRegionChanged;
+      property OnNotificationReceived;
+      property OnNotificationCloseRequested;
+      property OnSaveAsUIShowing;
+      property OnShowSaveAsUICompleted;
+      property OnSaveFileSecurityCheckStarting;
+      property OnScreenCaptureStarting;
+      property OnFrameScreenCaptureStarting;
+      property OnFrameChildFrameCreated;
+      property OnFindActiveMatchIndexChanged;
+      property OnFindMatchCountChanged;
+      property OnFindStartCompleted;
+      property OnDragStarting;
+      property OnDedicatedWorkerCreated;
+      property OnDedicatedWorkerCreated2;
+      property OnDedicatedWorkerDestroying;
+      property OnDedicatedWorkerWebMessageReceived;
+      property OnFrameDedicatedWorkerCreated;
+      property OnServiceWorkerDestroying;
+      property OnServiceWorkerWebMessageReceived;
+      property OnServiceWorkerRegistered;
+      property OnGetServiceWorkerRegistrationsCompleted;
+      property OnServiceWorkerActivated;
+      property OnServiceWorkerRegistrationUnregistering;
+      property OnSharedWorkerCreated;
+      property OnGetSharedWorkersCompleted;
+      property OnSharedWorkerDestroying;
   end;
 
 {$IFDEF FPC}

@@ -1,5 +1,5 @@
  // The complete list of compiler versions is here :
- // http://docwiki.embarcadero.com/RADStudio/Tokyo/en/Compiler_Versions
+ // https://docwiki.embarcadero.com/RADStudio/Athens/en/Compiler_Versions
 
 {$DEFINE DELPHI_VERSION_UNKNOW}
 
@@ -393,7 +393,7 @@
   {$DEFINE DELPHI28_UP}
 {$ENDIF}
 
-// Rad Studio 12.0 - Delphi Yukon
+// Rad Studio 12.0 - Delphi Athens
 {$IFDEF VER360}
   {$UNDEF DELPHI_VERSION_UNKNOW}
   {$DEFINE DELPHI5_UP}
@@ -420,6 +420,36 @@
   {$DEFINE DELPHI27_UP}
   {$DEFINE DELPHI28_UP}
   {$DEFINE DELPHI29_UP}
+{$ENDIF}
+
+// Rad Studio 13.0 - Delphi Florence
+{$IFDEF VER370}
+  {$UNDEF DELPHI_VERSION_UNKNOW}
+  {$DEFINE DELPHI5_UP}
+  {$DEFINE DELPHI6_UP}
+  {$DEFINE DELPHI7_UP}
+  {$DEFINE DELPHI8_UP}
+  {$DEFINE DELPHI9_UP}
+  {$DEFINE DELPHI10_UP}
+  {$DEFINE DELPHI11_UP}
+  {$DEFINE DELPHI12_UP}
+  {$DEFINE DELPHI14_UP}
+  {$DEFINE DELPHI15_UP}
+  {$DEFINE DELPHI16_UP}
+  {$DEFINE DELPHI17_UP}
+  {$DEFINE DELPHI18_UP}
+  {$DEFINE DELPHI19_UP}
+  {$DEFINE DELPHI20_UP}
+  {$DEFINE DELPHI21_UP}
+  {$DEFINE DELPHI22_UP}
+  {$DEFINE DELPHI23_UP}
+  {$DEFINE DELPHI24_UP}
+  {$DEFINE DELPHI25_UP}
+  {$DEFINE DELPHI26_UP}
+  {$DEFINE DELPHI27_UP}
+  {$DEFINE DELPHI28_UP}
+  {$DEFINE DELPHI29_UP}
+  {$DEFINE DELPHI30_UP}
 {$ENDIF}
 
 {$IFDEF FPC}
@@ -453,6 +483,7 @@
     {$DEFINE DELPHI27_UP}
     {$DEFINE DELPHI28_UP}
     {$DEFINE DELPHI29_UP}
+    {$DEFINE DELPHI30_UP}
   {$ENDIF}
 {$ENDIF}
 
@@ -485,24 +516,3 @@
     {$DEFINE TARGET_64BITS}
   {$IFEND}
 {$IFEND}
-
-// Delphi uses MACOS for the new MacOSX and DARWIN is not defined
-// FPC uses DARWIN for the new MacOSX and MACOS is defined for the classic Macintosh OS (System 7)
-// We define MACOSX to avoid conflicts in both situations
-{$IFDEF FPC}
-  {$IFDEF DARWIN}
-    {$DEFINE MACOSX}
-  {$ENDIF}
-{$ELSE}
-  {$IFDEF MACOS}
-    {$DEFINE MACOSX}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF LINUX}
-  {$IFDEF FPC}
-    {$DEFINE LINUXFPC}
-  {$ELSE}
-    {$DEFINE LINUXFMX}
-  {$ENDIF}
-{$ENDIF}

@@ -34,10 +34,6 @@ uses
   SysUtils,
   uWVMiscFunctions;
 
-{$IFNDEF DELPHI16_UP}
-function GetCurrentProcessExplicitAppUserModelID(var AppID: LPWSTR): HRESULT; stdcall; external 'shell32' name 'GetCurrentProcessExplicitAppUserModelID';
-{$ENDIF}
-
 type
   TWebView2ReleaseChannelPreference = (kStable = 0, kCanary = 1);
 
@@ -88,26 +84,31 @@ begin
     Result := False;
 end;
 
-function GetAppUserModelIdForCurrentProcess(var idOut: wvstring): integer;
+function GetAppUserModelIdForCurrentProcess(var idOut: wvstring): HRESULT;
 type
-  GetCurrentApplicationUserModelIdProc = function(var applicationUserModelIdLength: Cardinal; applicationUserModelId: PWideChar): HRESULT; stdcall;
+  GetCurrentApplicationUserModelIdProc        = function(var applicationUserModelIdLength: Cardinal; applicationUserModelId: PWideChar): HRESULT; stdcall;
+  GetCurrentProcessExplicitAppUserModelIDProc = function(var AppID: LPWSTR): HRESULT; stdcall;
 var
-  GetCurrentApplicationUserModelId : GetCurrentApplicationUserModelIdProc;
+  LGetCurrentApplicationUserModelId        : GetCurrentApplicationUserModelIdProc;
+  LGetCurrentProcessExplicitAppUserModelID : GetCurrentProcessExplicitAppUserModelIDProc;
   TempLen   : Cardinal;
   TempAppID : PWideChar;
 begin
+  Result := E_NOTIMPL;
+  idOut  := '';
+
   // GetCurrentApplicationUserModelId is only available in Windows 8 or newer
   if (Win32MajorVersion > 6) or
      ((Win32MajorVersion = 6) and (Win32MinorVersion >= 2)) then
     begin
-      GetCurrentApplicationUserModelId := GetProcAddress(GetModuleHandleW('Kernel32.dll'), 'GetCurrentApplicationUserModelId');
+      LGetCurrentApplicationUserModelId := GetProcAddress(GetModuleHandleW('Kernel32.dll'), 'GetCurrentApplicationUserModelId');
       TempLen := 0;
 
-      if assigned(GetCurrentApplicationUserModelId) and
-         (GetCurrentApplicationUserModelId(TempLen, nil) = ERROR_INSUFFICIENT_BUFFER) then
+      if assigned(LGetCurrentApplicationUserModelId) and
+         (LGetCurrentApplicationUserModelId(TempLen, nil) = ERROR_INSUFFICIENT_BUFFER) then
         begin
           SetLength(idOut, TempLen);
-          if (GetCurrentApplicationUserModelId(TempLen, PWideChar(idOut)) = ERROR_SUCCESS) then
+          if (LGetCurrentApplicationUserModelId(TempLen, PWideChar(idOut)) = ERROR_SUCCESS) then
             begin
               idOut  := trim(idOut);
               Result := S_OK;
@@ -116,16 +117,25 @@ begin
         end;
     end;
 
-  TempAppID := nil;
-  Result    := GetCurrentProcessExplicitAppUserModelID(TempAppID);
+  // GetCurrentProcessExplicitAppUserModelID is only available in Windows 7 or newer
+  if (Win32MajorVersion > 6) or
+     ((Win32MajorVersion = 6) and (Win32MinorVersion >= 1)) then
+    begin
+      LGetCurrentProcessExplicitAppUserModelID := GetProcAddress(GetModuleHandleW('shell32.dll'), 'GetCurrentProcessExplicitAppUserModelID');
+      TempLen := 0;
 
-  if succeeded(Result) then
-    idOut := TempAppID
-   else
-    idOut := '';
+      if assigned(LGetCurrentProcessExplicitAppUserModelID) then
+        begin
+          TempAppID := nil;
+          Result    := LGetCurrentProcessExplicitAppUserModelID(TempAppID);
 
-  if assigned(TempAppID) then
-    CoTaskMemFree(TempAppID);
+          if succeeded(Result) then
+            idOut := TempAppID;
+
+          if assigned(TempAppID) then
+            CoTaskMemFree(TempAppID);
+        end;
+    end;
 end;
 
 function GetModulePath(h: HModule; var outPath: wvstring): HRESULT;
@@ -502,7 +512,7 @@ begin
       if TempReg.KeyExists(aSubKey) and
          TempReg.OpenKey(aSubKey, False) then
         begin
-          aClientPath := TempReg.ReadString('EBWebView');
+          aClientPath := {$IFDEF FPC}UTF8Decode({$ENDIF}TempReg.ReadString('EBWebView'){$IFDEF FPC}){$ENDIF};
 
           if (aClientPath <> '') then
             begin
@@ -557,15 +567,18 @@ function FindInstalledClientDll(var clientPath : wvstring;
                                     preference : TWebView2ReleaseChannelPreference;
                                 var versionStr : wvstring;
                                 var channelStr : wvstring): integer;
+const
+  APPMODEL_ERROR_NO_PACKAGE = $00003D54;                                
 var
   channel: Cardinal;
   lpSubKey: wvstring;
   version: TVersionRec;
-  pkBuf: wvstring;
+  pkBuf: array of byte;
   i, j: integer;
   len, cPackages: Cardinal;
   packages, package: PPACKAGE_INFO;
   GetCurrentPackageInfo: TGetCurrentPackageInfoProc;
+  TempResult : integer;
 begin
   // GetCurrentPackageInfo is only available in Windows 8 or newer
   if (Win32MajorVersion > 6) or
@@ -601,11 +614,18 @@ begin
         continue;
 
       len := 0;
-      if (GetCurrentPackageInfo(1, len, nil, cPackages) <> ERROR_INSUFFICIENT_BUFFER) or (len = 0) then
+      TempResult := GetCurrentPackageInfo(1, len, nil, cPackages);
+      if (TempResult = APPMODEL_ERROR_NO_PACKAGE) then
+        begin
+          Result := E_FAIL;
+          exit;
+        end;
+      
+      if (TempResult <> ERROR_INSUFFICIENT_BUFFER) or (len = 0) then
         continue;
 
       SetLength(pkBuf, len);
-      if (GetCurrentPackageInfo(1, len, pointer(pkBuf), cPackages) <> 0) or (cPackages = 0) then
+      if (GetCurrentPackageInfo(1, len, @pkBuf[0], cPackages) <> 0) or (cPackages = 0) then
         continue;
 
       packages := PPACKAGE_INFO(pkBuf);
@@ -633,7 +653,7 @@ begin
 
       if CheckVersionAndFindClientDllInFolder(version, clientPath) then
         begin
-          versionStr := format('%d.%d.%d.%d', [version[0], version[1], version[2], version[3]]);
+          versionStr := {$IFDEF FPC}UTF8Decode({$ENDIF}format('%d.%d.%d.%d', [version[0], version[1], version[2], version[3]]){$IFDEF FPC}){$ENDIF};
           break;
         end;
     end;

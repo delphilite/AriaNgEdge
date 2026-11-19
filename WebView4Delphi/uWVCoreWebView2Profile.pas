@@ -31,6 +31,7 @@ type
       FBaseIntf6 : ICoreWebView2Profile6;
       FBaseIntf7 : ICoreWebView2Profile7;
       FBaseIntf8 : ICoreWebView2Profile8;
+      FBaseIntf9 : ICoreWebView2Profile9;
 
       FProfileDeletedToken : EventRegistrationToken;
 
@@ -44,12 +45,16 @@ type
       function GetCookieManager : ICoreWebView2CookieManager;
       function GetIsPasswordAutosaveEnabled : boolean;
       function GetIsGeneralAutofillEnabled : boolean;
+      function GetAreWebViewScriptApisEnabledForServiceWorkers : boolean;
+      function GetServiceWorkerManager : ICoreWebView2ServiceWorkerManager;
+      function GetSharedWorkerManager : ICoreWebView2SharedWorkerManager;
 
       procedure SetDefaultDownloadFolderPath(const aValue : wvstring);
       procedure SetPreferredColorScheme(aValue : TWVPreferredColorScheme);
       procedure SetPreferredTrackingPreventionLevel(aValue : TWVTrackingPreventionLevel);
       procedure SetIsPasswordAutosaveEnabled(aValue : boolean);
       procedure SetIsGeneralAutofillEnabled(aValue : boolean);
+      procedure SetAreWebViewScriptApisEnabledForServiceWorkers(aValue : boolean);
 
       procedure InitializeFields;
       procedure InitializeTokens;
@@ -216,32 +221,32 @@ type
       /// <summary>
       /// Returns true when the interface implemented by this class is fully initialized.
       /// </summary>
-      property Initialized                       : boolean                     read GetInitialized;
+      property Initialized                                  : boolean                             read GetInitialized;
       /// <summary>
       /// Returns the interface implemented by this class.
       /// </summary>
-      property BaseIntf                          : ICoreWebView2Profile        read FBaseIntf                            write FBaseIntf;
+      property BaseIntf                                     : ICoreWebView2Profile                read FBaseIntf                                        write FBaseIntf;
       /// <summary>
       /// Name of the profile.
       /// </summary>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile#get_profilename">See the ICoreWebView2Profile article.</see></para>
       /// </remarks>
-      property ProfileName                       : wvstring                    read GetProfileName;
+      property ProfileName                                  : wvstring                            read GetProfileName;
       /// <summary>
       /// InPrivate mode is enabled or not.
       /// </summary>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile#get_isinprivatemodeenabled">See the ICoreWebView2Profile article.</see></para>
       /// </remarks>
-      property IsInPrivateModeEnabled            : boolean                     read GetIsInPrivateModeEnabled;
+      property IsInPrivateModeEnabled                       : boolean                             read GetIsInPrivateModeEnabled;
       /// <summary>
       /// Full path of the profile directory.
       /// </summary>
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile#get_profilepath">See the ICoreWebView2Profile article.</see></para>
       /// </remarks>
-      property ProfilePath                       : wvstring                    read GetProfilePath;
+      property ProfilePath                                  : wvstring                            read GetProfilePath;
       /// <summary>
       /// Gets the `DefaultDownloadFolderPath` property. The default value is the
       /// system default download folder path for the user.
@@ -249,7 +254,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile#get_defaultdownloadfolderpath">See the ICoreWebView2Profile article.</see></para>
       /// </remarks>
-      property DefaultDownloadFolderPath         : wvstring                    read GetDefaultDownloadFolderPath         write SetDefaultDownloadFolderPath;
+      property DefaultDownloadFolderPath                    : wvstring                            read GetDefaultDownloadFolderPath                     write SetDefaultDownloadFolderPath;
       /// <summary>
       /// <para>The PreferredColorScheme property sets the overall color scheme of the
       /// WebView2s associated with this profile. This sets the color scheme for
@@ -262,7 +267,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile#get_preferredcolorscheme">See the ICoreWebView2Profile article.</see></para>
       /// </remarks>
-      property PreferredColorScheme              : TWVPreferredColorScheme     read GetPreferredColorScheme              write SetPreferredColorScheme;
+      property PreferredColorScheme                         : TWVPreferredColorScheme             read GetPreferredColorScheme                          write SetPreferredColorScheme;
       /// <summary>
       /// <para>The `PreferredTrackingPreventionLevel` property allows you to control levels of tracking prevention for WebView2
       /// which are associated with a profile. This level would apply to the context of the profile. That is, all WebView2s
@@ -282,7 +287,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile3#get_preferredtrackingpreventionlevel">See the ICoreWebView2Profile3 article.</see></para>
       /// </remarks>
-      property PreferredTrackingPreventionLevel  : TWVTrackingPreventionLevel  read GetPreferredTrackingPreventionLevel  write SetPreferredTrackingPreventionLevel;
+      property PreferredTrackingPreventionLevel             : TWVTrackingPreventionLevel          read GetPreferredTrackingPreventionLevel              write SetPreferredTrackingPreventionLevel;
       /// <summary>
       /// Get the cookie manager for the profile. All CoreWebView2s associated with this
       /// profile share the same cookie values. Changes to cookies in this cookie manager apply to all
@@ -291,7 +296,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile5#get_cookiemanager">See the ICoreWebView2Profile5 article.</see></para>
       /// </remarks>
-      property CookieManager                     : ICoreWebView2CookieManager  read GetCookieManager;
+      property CookieManager                                : ICoreWebView2CookieManager          read GetCookieManager;
       /// <summary>
       /// <para>IsPasswordAutosaveEnabled controls whether autosave for password
       /// information is enabled. The IsPasswordAutosaveEnabled property behaves
@@ -316,7 +321,7 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile6#get_ispasswordautosaveenabled">See the ICoreWebView2Profile6 article.</see></para>
       /// </remarks>
-      property IsPasswordAutosaveEnabled         : boolean                     read GetIsPasswordAutosaveEnabled         write SetIsPasswordAutosaveEnabled;
+      property IsPasswordAutosaveEnabled                    : boolean                             read GetIsPasswordAutosaveEnabled                     write SetIsPasswordAutosaveEnabled;
       /// <summary>
       /// <para>IsGeneralAutofillEnabled controls whether autofill for information
       /// like names, street and email addresses, phone numbers, and arbitrary input
@@ -337,7 +342,35 @@ type
       /// <remarks>
       /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile6#get_isgeneralautofillenabled">See the ICoreWebView2Profile6 article.</see></para>
       /// </remarks>
-      property IsGeneralAutofillEnabled          : boolean                     read GetIsGeneralAutofillEnabled          write SetIsGeneralAutofillEnabled;
+      property IsGeneralAutofillEnabled                     : boolean                             read GetIsGeneralAutofillEnabled                      write SetIsGeneralAutofillEnabled;
+      /// <summary>
+      /// Enables or disables webview2 specific Service Worker JS APIs in the
+      /// WebView2s associated with this Profile. When set to `TRUE`, chrome and
+      /// webview objects are available in Service Workers. chrome.webview exposes
+      /// APIs to interact with the WebView from Service Workers. The default value
+      /// is `FALSE`. This setting applies to all newly installed Service Workers
+      /// within the profile and is not persisted across WebView2 sessions.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#set_arewebviewscriptapisenabledforserviceworkers">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property AreWebViewScriptApisEnabledForServiceWorkers : boolean                             read GetAreWebViewScriptApisEnabledForServiceWorkers  write SetAreWebViewScriptApisEnabledForServiceWorkers;
+      /// <summary>
+      /// Get the service worker manager to monitor service worker registrations and
+      /// interact with the service workers associated with the current profile.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#get_serviceworkermanager">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property ServiceWorkerManager                         : ICoreWebView2ServiceWorkerManager   read GetServiceWorkerManager;
+      /// <summary>
+      /// Get the shared worker manager to monitor shared worker creations and interact
+      /// with the shared workers associated with the current profile.
+      /// </summary>
+      /// <remarks>
+      /// <para><see href="https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/icorewebview2profile9#get_sharedworkermanager">See the ICoreWebView2Profile9 article.</see></para>
+      /// </remarks>
+      property SharedWorkerManager                          : ICoreWebView2SharedWorkerManager    read GetSharedWorkerManager;
   end;
 
 implementation
@@ -364,8 +397,9 @@ begin
      LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile4, FBaseIntf4) and
      LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile5, FBaseIntf5) and
      LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile6, FBaseIntf6) and
-     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile7, FBaseIntf7) then
-    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile8, FBaseIntf8);
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile7, FBaseIntf7) and
+     LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile8, FBaseIntf8) then
+    LoggedQueryInterface(FBaseIntf, IID_ICoreWebView2Profile9, FBaseIntf9);
 end;
 
 destructor TCoreWebView2Profile.Destroy;
@@ -388,6 +422,9 @@ begin
   FBaseIntf6 := nil;
   FBaseIntf7 := nil;
   FBaseIntf8 := nil;
+  FBaseIntf9 := nil;
+
+  InitializeTokens;
 end;
 
 procedure TCoreWebView2Profile.InitializeTokens;
@@ -542,6 +579,41 @@ begin
             (TempResult <> 0);
 end;
 
+function TCoreWebView2Profile.GetAreWebViewScriptApisEnabledForServiceWorkers : boolean;
+var
+  TempResult : integer;
+begin
+  Result := assigned(FBaseIntf9) and
+            succeeded(FBaseIntf9.Get_AreWebViewScriptApisEnabledForServiceWorkers(TempResult)) and
+            (TempResult <> 0);
+end;
+
+function TCoreWebView2Profile.GetServiceWorkerManager : ICoreWebView2ServiceWorkerManager;
+var
+  TempResult : ICoreWebView2ServiceWorkerManager;
+begin
+  Result     := nil;
+  TempResult := nil;
+
+  if assigned(FBaseIntf9) and
+     succeeded(FBaseIntf9.Get_ServiceWorkerManager(TempResult)) and
+     assigned(TempResult) then
+    Result := TempResult;
+end;
+
+function TCoreWebView2Profile.GetSharedWorkerManager : ICoreWebView2SharedWorkerManager;
+var
+  TempResult : ICoreWebView2SharedWorkerManager;
+begin
+  Result     := nil;
+  TempResult := nil;
+
+  if assigned(FBaseIntf9) and
+     succeeded(FBaseIntf9.Get_SharedWorkerManager(TempResult)) and
+     assigned(TempResult) then
+    Result := TempResult;
+end;
+
 procedure TCoreWebView2Profile.SetDefaultDownloadFolderPath(const aValue : wvstring);
 begin
   if Initialized then
@@ -570,6 +642,12 @@ procedure TCoreWebView2Profile.SetIsGeneralAutofillEnabled(aValue: boolean);
 begin
   if assigned(FBaseIntf6) then
     FBaseIntf6.Set_IsGeneralAutofillEnabled(ord(aValue));
+end;
+
+procedure TCoreWebView2Profile.SetAreWebViewScriptApisEnabledForServiceWorkers(aValue : boolean);
+begin
+  if assigned(FBaseIntf9) then
+    FBaseIntf9.Set_AreWebViewScriptApisEnabledForServiceWorkers(ord(aValue));
 end;
 
 function TCoreWebView2Profile.ClearBrowsingData(      dataKinds : TWVBrowsingDataKinds;
